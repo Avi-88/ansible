@@ -1,0 +1,52 @@
+cluster_details:
+  cluster_name: "TEST_Cluster"
+  redundancy_factor: 2
+  cluster_external_ip: "192.168.50.10"
+  cvm_dns_servers:
+    - "8.8.8.8"
+    - "1.1.1.1"
+  cvm_ntp_servers:
+    - "pool.ntp.org"
+
+cvm_network:
+  gateway: "192.168.50.1"
+  netmask: "255.255.255.0"
+hypervisor_network:
+  gateway: "192.168.50.1"
+  netmask: "255.255.255.0"
+aos_package_filename: "AOS-6.0.1.pkg"
+hypervisor_iso_checksum: "SHA256-CHECKSUM-OF-ISO"
+hypervisor_iso_filename: "AHV-iso-2025.iso"
+ipmi_credentials:
+  username: "ADMIN"
+  password: "ADMIN_PASS"
+
+
+block_1_id: "BLOCK-1-ID"
+
+nodes_list:
+  - mode: "manual"
+    node_position: "A"
+    node_serial: "FVM_NODE_1_SERIAL"
+    cvm_ip: "192.168.50.11"
+    hypervisor_ip: "192.168.50.21"
+    hypervisor_hostname: "fvm-node-a.corp.local"
+    ipmi_ip: "192.168.60.11"
+    hypervisor_type: "ahv"
+  - mode: "manual"
+    node_position: "B"
+    node_serial: "FVM_NODE_2_SERIAL"
+    cvm_ip: "192.168.50.12"
+    hypervisor_ip: "192.168.50.22"
+    hypervisor_hostname: "fvm-node-b.corp.local"
+    ipmi_ip: "192.168.60.12"
+    hypervisor_type: "ahv"
+  - mode: "manual"
+    node_position: "C"
+    node_serial: "FVM_NODE_3_SERIAL"
+    cvm_ip: "192.168.50.13"
+    hypervisor_ip: "192.168.50.23"
+    hypervisor_hostname: "fvm-node-c.corp.local"
+    ipmi_ip: "192.168.60.13"
+    hypervisor_type: "ahv"
+

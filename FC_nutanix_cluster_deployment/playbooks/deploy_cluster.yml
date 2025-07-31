@@ -1,0 +1,127 @@
+---
+- name: Play Number 1 - Discover Nodes and Prepare Deployment Data
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+
+  module_defaults:
+    group/nutanix.ncp.ntnx:
+      nutanix_host: "{{ fc_ip_address }}"
+      nutanix_username: "{{ fc_username }}"
+      nutanix_password: "{{ fc_password }}"
+      validate_certs: false
+
+  tasks:
+    - name: "Get all nodes discovered by Foundation Central"
+      nutanix.ncp.ntnx_foundation_central_imaged_nodes_info:
+        filters:
+          node_state: "STATE_AVAILABLE"
+      register: discovered_nodes_result
+
+    - name: "Fail if no discovered nodes are found"
+      ansible.builtin.fail:
+        msg: "No available nodes were discovered in Foundation Central. Please check DHCP configuration and ensure nodes are powered on."
+      when: discovered_nodes_result.metadata.total_matches == 0
+
+    - name: "Create a lookup map of node serials to their UUIDs"
+      ansible.builtin.set_fact:
+        discovered_nodes_map: "{{ discovered_nodes_result.entities | items2dict(key_name='node_serial', value_name='imaged_node_uuid') }}"
+
+    - name: "Construct the final node list for deployment"
+      ansible.builtin.set_fact:
+        final_nodes_for_deployment: |
+          {% set processed_nodes = [] %}
+          {% for node in nodes_list %}
+          {%   if node.node_serial in discovered_nodes_map %}
+          {%     set final_node_data = node | combine({'imaged_node_uuid': discovered_nodes_map[node.node_serial]}) %}
+          {%     set _ = processed_nodes.append(final_node_data) %}
+          {%   endif %}
+          {% endfor %}
+          {{ processed_nodes }}
+      
+    - name: "Fail if a configured node serial was not found in Foundation Central"
+      ansible.builtin.fail:
+        msg: "One or more node serial numbers defined in your hosts_vars.yml were not found in Foundation Central. Please verify the serial numbers and that the nodes are discovered."
+      when: final_nodes_for_deployment | length != nodes_list | length
+
+
+- name: Play Number 2 - Deploy Nutanix Cluster
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+
+  module_defaults:
+    group/nutanix.ncp.ntnx:
+      nutanix_host: "{{ fc_ip_address }}"
+      nutanix_username: "{{ fc_username }}"
+      nutanix_password: "{{ fc_password }}"
+      validate_certs: false
+
+  tasks:
+    - name: "Start cluster creation process (asynchronous)"
+      nutanix.ncp.ntnx_foundation_central:
+        state: present
+        cluster_details: "{{ cluster_details }}"
+        nodes: "{{ hostvars['localhost']['final_nodes_for_deployment'] }}"
+        hypervisor_iso_details: "{{ hypervisor_iso_details }}"
+        aos_package_url: "{{ aos_package_url }}"
+        aos_package_sha256sum: "{{ aos_package_sha256sum }}"
+      async: 7200
+      poll: 0
+      register: foundation_job
+
+    - name: "Block for monitoring the asynchronous job"
+      block:
+        - name: "Wait for cluster creation to complete"
+          ansible.builtin.async_status:
+            jid: "{{ foundation_job.ansible_job_id }}"
+          register: job_result
+          until: job_result.finished
+          retries: 240 # Up to 2hrs polling limit
+          delay: 30
+      rescue:
+        - name: "Handle playbook failure due to lost connection"
+          ansible.builtin.fail:
+            msg: |
+              Failed to get completion status from Foundation Central due to a network interruption or timeout.
+
+    # - name: "Wait for cluster creation to complete"
+    #   ansible.builtin.async_status:
+    #     jid: "{{ foundation_job.ansible_job_id }}"
+    #   register: job_result
+    #   until: job_result.finished
+    #   retries: 240
+    #   delay: 30
+
+
+    # # --- Stage 1: Find the Cluster UUID ---
+    # - name: "Find the new cluster imaging job by its name"
+    #   nutanix.ncp.ntnx_foundation_central_imaged_clusters_info:
+    #     filters:
+    #       archived: false # Only show active, in-progress clusters
+    #   register: active_clusters
+    #   until: "((active_clusters.entities | selectattr('cluster_name', 'equalto', cluster_details.cluster_name)) | list) | length > 0"
+    #   retries: 12 # Retry for 1 minute to give the job time to appear
+    #   delay: 5    # Check every 5 seconds
+      
+    # - name: "Set fact for the new cluster's UUID"
+    #   ansible.builtin.set_fact:
+    #     imaged_cluster_uuid: "{{ ((active_clusters.entities | selectattr('cluster_name', 'equalto', cluster_details.cluster_name)) | first).imaged_cluster_uuid }}"
+    #     # This is a safe action because the previous task guarantees the item exists
+
+    # # --- Stage 2: Monitor the job's progress to completion ---
+    # - name: "Monitor cluster creation progress using its UUID"
+    #   ansible.builtin.include_tasks:
+    #     file: poll_cluster_progress.yml
+    #   loop: "{{ range(1, 241) | list }}" # Loop up to 2 hours
+    #   loop_control:
+    #     label: "Checking progress... (Attempt {{ item }}/240)"
+    #   vars:
+    #     fc_cluster_uuid: "{{ imaged_cluster_uuid }}"
+
+    # - name: "Final check to confirm success"
+    #   ansible.builtin.fail:
+    #     msg: "Cluster creation timed out after 2 hours."
+    #   when: cluster_creation_state != 'IMAGING_SUCCEEDED'

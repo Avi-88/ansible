@@ -1,0 +1,45 @@
+cluster_details:
+  cluster_name: "TEST_Cluster"
+  redundancy_factor: 2
+  cluster_external_ip: "192.168.20.10"
+  cvm_dns_servers:
+    - "8.8.8.8"
+    - "1.1.1.1"
+  cvm_ntp_servers:
+    - "pool.ntp.org"
+  hypervisor_dns_servers:
+    - "8.8.8.8"
+  timezone: "UTC"
+  default_ipmi_user: "ADMIN"
+
+nodes_list:
+  - node_serial: "SERIAL_NUMBER_OF_NODE_1"
+    cvm_ip: "192.168.20.11"
+    cvm_netmask: "255.255.255.0"
+    cvm_gateway: "192.168.20.1"
+    hypervisor_ip: "192.168.20.21"
+    hypervisor_hostname: "dyn-node-a.corp.local"
+    ipmi_ip: "192.168.30.11"
+    ipmi_netmask: "255.255.255.0"
+    ipmi_gateway: "192.168.30.1"
+    image_now: true
+  - node_serial: "SERIAL_NUMBER_OF_NODE_2"
+    cvm_ip: "192.168.20.12"
+    cvm_netmask: "255.255.255.0"
+    cvm_gateway: "192.168.20.1"
+    hypervisor_ip: "192.168.20.22"
+    hypervisor_hostname: "dyn-node-b.corp.local"
+    ipmi_ip: "192.168.30.12"
+    ipmi_netmask: "255.255.255.0"
+    ipmi_gateway: "192.168.30.1"
+    image_now: true
+  - node_serial: "SERIAL_NUMBER_OF_NODE_3"
+    cvm_ip: "192.168.20.13"
+    cvm_netmask: "255.255.255.0"
+    cvm_gateway: "192.168.20.1"
+    hypervisor_ip: "192.168.20.23"
+    hypervisor_hostname: "dyn-node-c.corp.local"
+    ipmi_ip: "192.168.30.13"
+    ipmi_netmask: "255.255.255.0"
+    ipmi_gateway: "192.168.30.1"
+    image_now: true

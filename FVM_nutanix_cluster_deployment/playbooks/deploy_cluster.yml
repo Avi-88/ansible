@@ -1,0 +1,49 @@
+---
+- name: Deploy Nutanix Cluster with Standalone Foundation VM
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+
+  tasks:
+    - name: Image nodes and create the cluster
+      nutanix.ncp.ntnx_foundation:
+        nutanix_host: "{{ foundation_vm_ip }}"
+        timeout: 7200 
+        cvm_gateway: "{{ cvm_network.gateway }}"
+        cvm_netmask: "{{ cvm_network.netmask }}"
+        hypervisor_gateway: "{{ hypervisor_network.gateway }}"
+        hypervisor_netmask: "{{ hypervisor_network.netmask }}"
+        nos_package: "{{ aos_package_filename }}"
+        hypervisor_iso:
+          ahv:
+            checksum: "{{ hypervisor_iso_checksum }}"
+            filename: "{{ hypervisor_iso_filename }}"
+        default_ipmi_user: "{{ ipmi_credentials.username }}"
+        default_ipmi_password: "{{ ipmi_credentials.password }}"
+        blocks:
+          - block_id: "{{ block_1_id }}"
+            nodes: |
+              {% for node in nodes_list %}
+              - manual_mode:
+                  node_position: "{{ node.node_position }}"
+                  node_serial: "{{ node.node_serial }}"
+                  cvm_ip: "{{ node.cvm_ip }}"
+                  hypervisor_ip: "{{ node.hypervisor_ip }}"
+                  hypervisor_hostname: "{{ node.hypervisor_hostname }}"
+                  ipmi_ip: "{{ node.ipmi_ip }}"
+                  hypervisor: "{{ node.hypervisor_type }}"
+              {% endfor %}
+        clusters:
+          - name: "{{ cluster_details.cluster_name }}"
+            redundancy_factor: "{{ cluster_details.redundancy_factor }}"
+            cluster_virtual_ip: "{{ cluster_details.cluster_external_ip }}"
+            cluster_members: {{ nodes_list | map(attribute='cvm_ip') | list }}
+            dns_servers: "{{ cluster_details.cvm_dns_servers }}"
+            ntp_servers: "{{ cluster_details.cvm_ntp_servers }}"
+
+      register: foundation_output
+      
+    - name: Print foundation process results
+      ansible.builtin.debug:
+        var: foundation_output
