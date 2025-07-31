@@ -40,7 +40,7 @@
         clusters:
           - name: "{{ cluster_details.cluster_name }}"
             redundancy_factor: "{{ cluster_details.redundancy_factor }}"
-            cluster_members: {{ nodes_list | map(attribute='cvm_ip') | list }}
+            cluster_members: "{{ nodes_list | map(attribute='cvm_ip') | list }}"
             cvm_dns_servers: "{{ cluster_details.cvm_dns_servers }}"
             cvm_ntp_servers: "{{ cluster_details.cvm_ntp_servers }}"
             hypervisor_ntp_servers: "{{ cluster_details.hypervisor_ntp_servers }}"
