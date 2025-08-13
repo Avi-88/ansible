@@ -1,0 +1,62 @@
+---
+cluster_details:
+  cluster_name: "Etisalat-FVM-Cluster"
+  foundation_vm_ip: "10.48.108.120"
+  redundancy_factor: 2
+  cluster_external_ip: "10.38.80.37"
+  cvm_dns_servers:
+    - "8.8.8.8"
+    - "10.42.194.10"
+  cvm_ntp_servers:
+    - "pool.ntp.org"
+  hypervisor_ntp_servers:
+    - "pool.ntp.org"
+
+cvm_network:
+  gateway: "10.38.80.1"
+  netmask: "255.255.255.128"
+  vlan_tag: 0
+
+hypervisor_network:
+  gateway: "10.38.80.1"
+  netmask: "255.255.255.128"
+
+ipmi_network:
+  gateway: "10.38.80.1"
+  netmask: "255.255.255.128"
+
+aos_package_filename: "nutanix_installer_package-release-ganges-7.0.1.6-stable-e1cddb5b69117226bf50480cd1842052e910bf6d-x86_64.tar.gz"
+hypervisor_iso_filename: "AHV-DVD-x86_64-10.0.1.1-15.iso"
+
+ipmi_credentials:
+  username: "ADMIN"
+  password: "ADMIN"
+
+block_1_id: "BLOCK-1-ID"
+
+# V-- THIS IS THE CORRECTED SECTION --V
+nodes_list:
+  - manual_mode:
+      node_position: "A"
+      cvm_ip: "10.38.80.29"
+      cvm_gb_ram: 40
+      hypervisor_ip: "10.38.80.25"
+      hypervisor_hostname: "ALPHA-1"
+      ipmi_ip: "10.38.80.33"
+      hypervisor: "kvm"
+  - manual_mode:
+      node_position: "B"
+      cvm_ip: "10.38.80.30"
+      cvm_gb_ram: 40
+      hypervisor_ip: "10.38.80.26"
+      hypervisor_hostname: "ALPHA-2"
+      ipmi_ip: "10.38.80.34"
+      hypervisor: "kvm"
+  - manual_mode:
+      node_position: "C"
+      cvm_ip: "10.38.80.31"
+      cvm_gb_ram: 40
+      hypervisor_ip: "10.38.80.27"
+      hypervisor_hostname: "ALPHA-3"
+      ipmi_ip: "10.38.80.35"
+      hypervisor: "kvm"

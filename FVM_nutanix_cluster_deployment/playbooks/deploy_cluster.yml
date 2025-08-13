@@ -5,11 +5,14 @@
   collections:
     - nutanix.ncp
 
+  vars_files:
+    - cluster_vars.yml
+
   tasks:
     - name: Image nodes and create the cluster
       nutanix.ncp.ntnx_foundation:
-        nutanix_host: "{{ foundation_vm_ip }}"
-        timeout: 7200 
+        nutanix_host: "{{ cluster_details.foundation_vm_ip }}"
+        timeout: 7200
         cvm_gateway: "{{ cvm_network.gateway }}"
         cvm_netmask: "{{ cvm_network.netmask }}"
         current_cvm_vlan_tag: "{{ cvm_network.vlan_tag }}"
@@ -20,34 +23,50 @@
         nos_package: "{{ aos_package_filename }}"
         hypervisor_iso:
           ahv:
-            checksum: "{{ hypervisor_iso_checksum }}"
             filename: "{{ hypervisor_iso_filename }}"
         default_ipmi_user: "{{ ipmi_credentials.username }}"
         default_ipmi_password: "{{ ipmi_credentials.password }}"
         blocks:
           - block_id: "{{ block_1_id }}"
-            nodes: |
-              {% for node in nodes_list %}
-              - manual_mode:
-                  node_position: "{{ node.node_position }}"
-                  node_serial: "{{ node.node_serial }}"
-                  cvm_ip: "{{ node.cvm_ip }}"
-                  hypervisor_ip: "{{ node.hypervisor_ip }}"
-                  hypervisor_hostname: "{{ node.hypervisor_hostname }}"
-                  ipmi_ip: "{{ node.ipmi_ip }}"
-                  hypervisor: "{{ node.hypervisor_type }}"
-              {% endfor %}
+            nodes: "{{ nodes_list }}"
         clusters:
           - name: "{{ cluster_details.cluster_name }}"
             redundancy_factor: "{{ cluster_details.redundancy_factor }}"
-            cluster_members: "{{ nodes_list | map(attribute='cvm_ip') | list }}"
+            cluster_members: "{{ nodes_list | map(attribute='manual_mode.cvm_ip') | list }}"
             cvm_dns_servers: "{{ cluster_details.cvm_dns_servers }}"
             cvm_ntp_servers: "{{ cluster_details.cvm_ntp_servers }}"
             hypervisor_ntp_servers: "{{ cluster_details.hypervisor_ntp_servers }}"
             cluster_init_now: true
 
-      register: foundation_output
-      
-    - name: Print foundation process results
+      async: 7500
+      poll: 0
+      register: foundation_job
+
+    - name: Show job started
       ansible.builtin.debug:
-        var: foundation_output
+        msg:
+          - "Foundation process started"
+          - "Job ID: {{ foundation_job.ansible_job_id }}"
+          - "Foundation VM: {{ cluster_details.foundation_vm_ip }}"
+          - "Monitoring will check every 30 seconds..."
+
+    - name: Check foundation progress periodically
+      ansible.builtin.async_status:
+        jid: "{{ foundation_job.ansible_job_id }}"
+      register: foundation_status
+      until: foundation_status.finished
+      retries: 240  # 240 * 30s = 2 hours
+      delay: 30
+      
+    - name: Display final results
+      ansible.builtin.debug:
+        msg:
+          - "=== FOUNDATION COMPLETED ==="
+          - "Final Status: {{ 'SUCCESS' if foundation_status.changed else 'FAILED' }}"
+          - "Total Time: {{ foundation_status.delta if foundation_status.delta is defined else 'Unknown' }}"
+          - "Foundation VM: {{ cluster_details.foundation_vm_ip }}"
+
+    - name: Show detailed final output
+      ansible.builtin.debug:
+        var: foundation_status
+      when: foundation_status is defined
