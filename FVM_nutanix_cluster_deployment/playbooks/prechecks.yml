@@ -9,19 +9,6 @@
     - cluster_vars.yml
 
   tasks:
-    # - name: "==================== SETUP PHASE ===================="
-    #   ansible.builtin.debug:
-    #     msg: "Adding Foundation VM to in-memory inventory with connection details."
-
-    # - name: "Add Foundation VM to inventory dynamically"
-    #   ansible.builtin.add_host:
-    #     name: "{{ cluster_details.foundation_vm_ip }}"
-    #     groups: foundation_vms
-    #     ansible_ssh_user: nutanix
-    #     ansible_ssh_pass: "nutanix/4u"
-    #     ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-    #   changed_when: false
-
     - name: "==================== VALIDATION PHASE ===================="
       ansible.builtin.debug:
         msg: "Starting pre-deployment network validation checks."
@@ -32,7 +19,7 @@
 
     - name: "Set a theoretical IP within the Host/CVM network to target"
       ansible.builtin.set_fact:
-        target_test_ip: "{{ cvm_network.gateway | ansible.utils.ipmath(10) }}"
+        target_test_ip: "{{ (cvm_network.gateway | ansible.utils.ipaddr('add', 10)) }}"
 
     - name: "Check connectivity to specific IPMI IPs (Direct Check)"
       ansible.builtin.wait_for:
