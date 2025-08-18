@@ -19,7 +19,7 @@
 
     - name: "Set a theoretical IP within the Host/CVM network to target"
       ansible.builtin.set_fact:
-        target_test_ip: "{{ (cvm_network.gateway | ansible.utils.ipaddr('add', 10)) }}"
+        target_test_ip: "{{ (cvm_network.gateway | ipaddr('add', 10)) }}"
 
     - name: "Check connectivity to specific IPMI IPs (Direct Check)"
       ansible.builtin.wait_for:
