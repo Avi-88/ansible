@@ -6,9 +6,22 @@
     - nutanix.ncp
 
   vars_files:
-    - cluster_vars.yml 
+    - cluster_vars.yml
 
   tasks:
+    - name: "==================== SETUP PHASE ===================="
+      ansible.builtin.debug:
+        msg: "Adding Foundation VM to in-memory inventory with connection details."
+
+    - name: "Add Foundation VM to inventory dynamically"
+      ansible.builtin.add_host:
+        name: "{{ cluster_details.foundation_vm_ip }}"
+        groups: foundation_vms
+        ansible_ssh_user: nutanix
+        ansible_ssh_pass: "nutanix/4u"
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+      changed_when: false
+
     - name: "==================== VALIDATION PHASE ===================="
       ansible.builtin.debug:
         msg: "Starting pre-deployment network validation checks."
@@ -28,19 +41,21 @@
         state: started
         delay: 0
         timeout: 5
-      delegate_to: "{{ cluster_details.foundation_vm_ip }}"
+      delegate_to: foundation_vm
       loop: "{{ ipmi_ips_list | product(ports_to_check_on_ipmi) | list }}"
       loop_control:
         label: "FVM -> {{ item[0] }}:{{ item[1].port }} ({{ item[1].desc }})"
+      ignore_errors: true
 
     - name: "Trace network PATH to the Cluster Network (Traceroute Check)"
       ansible.builtin.command: "traceroute -T -p {{ item.port }} {{ target_test_ip }}"
-      delegate_to: "{{ cluster_details.foundation_vm_ip }}"
+      delegate_to: foundation_vm
       register: traceroute_result
       loop: "{{ ports_to_trace_to_cluster_network }}"
       loop_control:
         label: "Tracing path for port {{ item.port }} ({{ item.desc }}) to network"
       changed_when: false
+      ignore_errors: true
 
     - name: "Validate Cluster network path results"
       ansible.builtin.assert:

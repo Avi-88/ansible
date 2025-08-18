@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir ansible
 # Install Nutanix NCP collection
 RUN ansible-galaxy collection install nutanix.ncp
 
+# Clone the playbook repository
+RUN git clone https://github.com/Avi-88/ansible
+
 # Set workdir
 WORKDIR /workspace
 
