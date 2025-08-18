@@ -1,0 +1,56 @@
+---
+- name: Validate Nutanix Foundation Network Prerequisites
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - nutanix.ncp
+
+  vars_files:
+    - cluster_vars.yml 
+
+  tasks:
+    - name: "==================== VALIDATION PHASE ===================="
+      ansible.builtin.debug:
+        msg: "Starting pre-deployment network validation checks."
+
+    - name: "Dynamically create a list of IPMI IPs from node list"
+      ansible.builtin.set_fact:
+        ipmi_ips_list: "{{ nodes_list | map(attribute='manual_mode.ipmi_ip') | list }}"
+
+    - name: "Set a theoretical IP within the Host/CVM network to target"
+      ansible.builtin.set_fact:
+        target_test_ip: "{{ cvm_network.gateway | ansible.utils.ipmath(10) }}"
+
+    - name: "Check connectivity to specific IPMI IPs (Direct Check)"
+      ansible.builtin.wait_for:
+        host: "{{ item[0] }}"
+        port: "{{ item[1].port }}"
+        state: started
+        delay: 0
+        timeout: 5
+      delegate_to: "{{ cluster_details.foundation_vm_ip }}"
+      loop: "{{ ipmi_ips_list | product(ports_to_check_on_ipmi) | list }}"
+      loop_control:
+        label: "FVM -> {{ item[0] }}:{{ item[1].port }} ({{ item[1].desc }})"
+
+    - name: "Trace network PATH to the Cluster Network (Traceroute Check)"
+      ansible.builtin.command: "traceroute -T -p {{ item.port }} {{ target_test_ip }}"
+      delegate_to: "{{ cluster_details.foundation_vm_ip }}"
+      register: traceroute_result
+      loop: "{{ ports_to_trace_to_cluster_network }}"
+      loop_control:
+        label: "Tracing path for port {{ item.port }} ({{ item.desc }}) to network"
+      changed_when: false
+
+    - name: "Validate Cluster network path results"
+      ansible.builtin.assert:
+        that: "cvm_network.gateway in item.stdout_lines[-1]"
+        fail_msg: "PATH VALIDATION FAILED for port {{ item.item.port }} ({{ item.item.desc }}). Traffic could not reach the gateway ({{ cvm_network.gateway }}). Check intermediate firewalls and routing."
+        success_msg: "Path validation SUCCESS for port {{ item.item.port }}. Traffic reached the destination network gateway."
+      loop: "{{ traceroute_result.results }}"
+      loop_control:
+        label: "Checking result for port {{ item.item.port }}"
+
+    - name: "==================== VALIDATION SUCCEEDED ===================="
+      ansible.builtin.debug:
+        msg: "All network and port validation checks passed. You are clear to run the deployment playbook."

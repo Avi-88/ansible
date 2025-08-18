@@ -1,4 +1,17 @@
 ---
+
+ports_to_check_on_ipmi:
+  - { port: 80, desc: "HTTP" }
+  - { port: 443, desc: "HTTPS" }
+  - { port: 623, desc: "IPMI virtual media mount" }
+
+ports_to_trace_to_cluster_network:
+  - { port: 22, desc: "SSH (Host/CVM)" }
+  - { port: 443, desc: "HTTPS" }
+  - { port: 2100, desc: "Genesis (CVM)" }
+  - { port: 8000, desc: "Foundation API" }
+
+
 cluster_details:
   cluster_name: "Etisalat-FVM-Cluster"
   foundation_vm_ip: "10.48.108.120"
