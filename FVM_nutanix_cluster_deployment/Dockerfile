@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.6-slim
 
 # Install system dependencies
 RUN apt-get update && \
@@ -18,11 +18,12 @@ RUN pip install --no-cache-dir ansible
 # Install Nutanix NCP collection
 RUN ansible-galaxy collection install nutanix.ncp
 
-# Clone the playbook repository
-RUN git clone https://github.com/Avi-88/ansible
 
 # Set workdir
 WORKDIR /workspace
+
+# Clone the playbook repository
+RUN git clone https://github.com/Avi-88/ansible
 
 # Default command
 CMD ["/bin/bash"]
