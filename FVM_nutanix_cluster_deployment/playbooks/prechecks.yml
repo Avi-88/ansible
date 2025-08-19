@@ -1,7 +1,7 @@
 ---
 - name: Validate Nutanix Foundation Network Prerequisites
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   collections:
     - nutanix.ncp
 

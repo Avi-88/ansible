@@ -1,18 +1,26 @@
----
 
 ports_to_check_on_ipmi:
-  - { port: 80, desc: "HTTP" }
-  - { port: 443, desc: "HTTPS" }
-  - { port: 623, desc: "IPMI virtual media mount" }
+  - port: 80
+    desc: "HTTP"
+  - port: 443
+    desc: "HTTPS"
+  - port: 623
+    desc: "IPMI virtual media mount"
 
 ports_to_trace_to_cluster_network:
-  - { port: 22, desc: "SSH (Host/CVM)" }
-  - { port: 443, desc: "HTTPS" }
-  - { port: 2100, desc: "Genesis (CVM)" }
-  - { port: 8000, desc: "Foundation API" }
+  - port: 22
+    desc: "SSH (Host/CVM)"
+  - port: 443
+    desc: "HTTPS"
+  - port: 2100
+    desc: "Genesis (CVM)"
+  - port: 8000
+    desc: "Foundation API"
 
 
 cluster_details:
+  nutanix_default_username: "nutanix"
+  nutanix_default_password: "nutanix/4u"
   cluster_name: "Etisalat-FVM-Cluster"
   foundation_vm_ip: "10.48.108.120"
   redundancy_factor: 2
@@ -47,7 +55,6 @@ ipmi_credentials:
 
 block_1_id: "BLOCK-1-ID"
 
-# V-- THIS IS THE CORRECTED SECTION --V
 nodes_list:
   - manual_mode:
       node_position: "A"
@@ -73,3 +80,48 @@ nodes_list:
       hypervisor_hostname: "ALPHA-3"
       ipmi_ip: "10.38.80.35"
       hypervisor: "kvm"
+
+
+prism_central_details:
+  ip: "<pc_ip>"
+  username: "<username>"
+  password: "<password>"
+  ext_id: "00000000-0000-0000-0000-000000000000"
+
+validate_certs: false
+cluster_uuid: ""
+ntp_servers:
+  - "pool.ntp.org"
+  - "time.google.com"
+  - "time.cloudflare.com"
+smtp_config:
+  server: "smtp.company.com"
+  port: 587
+  username: "noreply@company.com"
+  password: "smtp_password_here"
+  from_email: "nutanix-alerts@company.com"
+  enable_tls: true
+dsip_config:
+  ip_address: "10.1.1.100"
+  netmask: "255.255.255.0"
+  gateway: "10.1.1.1"
+cluster_categories:
+  - key: "Environment"
+    value: "Production"
+  - key: "Department"
+    value: "IT"
+  - key: "Location"
+    value: "DataCenter-A"
+ssl_certificate: |
+  -----BEGIN CERTIFICATE-----
+  # Your SSL certificate content here (base64 encoded)
+  # This is just a placeholder
+  -----END CERTIFICATE-----
+ssl_private_key: |
+  -----BEGIN PRIVATE KEY-----
+  # Your private key content here (base64 encoded)
+  # This is just a placeholder
+  -----END PRIVATE KEY-----
+license_keys:
+  - "nutanix_license_key_1"
+  - "nutanix_license_key_2"

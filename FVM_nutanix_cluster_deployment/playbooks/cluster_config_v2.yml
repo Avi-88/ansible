@@ -1,0 +1,176 @@
+---
+- name: Configure Nutanix Cluster Settings
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+  vars_files:
+    - ./cluster_vars.yml
+
+  module_defaults:
+    group/nutanix.ncp.ntnx:
+      nutanix_host: "{{ prism_central_details.ip }}"
+      nutanix_username: "{{ prism_central_details.username }}"
+      nutanix_password: "{{ prism_central_details.password }}"
+      validate_certs: "{{ validate_certs | default(false) }}"
+
+  tasks:
+    - name: Get current cluster information
+      nutanix.ncp.ntnx_clusters_info_v2:
+        filter:
+          cluster_name: "{{ cluster_details.cluster_name }}"
+      register: cluster_info
+      when: cluster_uuid == ""
+
+    - name: Set cluster UUID from cluster info
+      set_fact:
+        cluster_uuid: "{{ cluster_info.response.data[0].ext_id }}"
+      when: cluster_uuid == "" and cluster_info.response.data | length > 0
+
+    - name: Configure NTP servers
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        ntp_servers: "{{ ntp_servers }}"
+        wait: true
+        wait_timeout: 300
+      register: ntp_result
+
+    - name: Display NTP configuration result
+      debug:
+        msg: "NTP servers configured: {{ ntp_result.response.data.ntp_servers | default('N/A') }}"
+
+    - name: Configure SMTP settings
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        smtp_server:
+          address: "{{ smtp_config.server }}"
+          port: "{{ smtp_config.port }}"
+          username: "{{ smtp_config.username }}"
+          password: "{{ smtp_config.password }}"
+          from_email_address: "{{ smtp_config.from_email }}"
+          security_mode: "{{ 'TLS' if smtp_config.enable_tls else 'NONE' }}"
+        wait: true
+        wait_timeout: 300
+      register: smtp_result
+
+    - name: Display SMTP configuration result
+      debug:
+        msg: "SMTP server configured: {{ smtp_result.changed }}"
+
+    - name: Configure Data Services IP (DSIP)
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        cluster_data_services_ip:
+          ip_address: "{{ dsip_config.ip_address }}"
+          prefix_length: "{{ dsip_config.netmask | ipaddr('prefix') }}"
+        wait: true
+        wait_timeout: 300
+      register: dsip_result
+
+    - name: Display DSIP configuration result
+      debug:
+        msg: "DSIP configured: {{ dsip_result.changed }}"
+
+    - name: Configure SSL certificates
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        ssl_key:
+          key_type: "RSA_2048"
+          certificate: "{{ ssl_certificate | b64encode }}"
+          private_key: "{{ ssl_private_key | b64encode }}"
+        wait: true
+        wait_timeout: 600
+      register: ssl_result
+
+    - name: Display SSL certificate configuration result
+      debug:
+        msg: "SSL certificate configured: {{ ssl_result.changed }}"
+
+    - name: Assign categories to cluster
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        categories:
+          "{{ item.key }}": "{{ item.value }}"
+        wait: true
+        wait_timeout: 300
+      register: category_result
+      loop: "{{ cluster_categories }}"
+
+    - name: Display category assignment results
+      debug:
+        msg: "Categories assigned: {{ category_result.results | map(attribute='changed') | list }}"
+
+    - name: Enable High Availability (HA)
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        enable_lock_down: false
+        fault_tolerance_state:
+          domain_awareness_level: "NODE"  
+          num_failures_to_tolerate: 1
+        hypervisor_types: ["AHV"]  
+        wait: true
+        wait_timeout: 600
+      register: ha_result
+
+    - name: Display HA configuration result
+      debug:
+        msg: "High Availability enabled: {{ ha_result.changed }}"
+
+    - name: Apply Nutanix licenses
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        license_keys: "{{ license_keys }}"
+        wait: true
+        wait_timeout: 300
+      register: license_result
+
+    - name: Display license application result
+      debug:
+        msg: "Licenses applied: {{ license_result.changed }}"
+
+    - name: Verify final cluster configuration
+      nutanix.ncp.ntnx_clusters_info_v2:
+        ext_id: "{{ cluster_uuid }}"
+      register: final_cluster_info
+
+    - name: Display final cluster configuration summary
+      debug:
+        msg: |
+          Cluster Configuration Summary:
+          - Name: {{ final_cluster_info.response.data.name }}
+          - UUID: {{ final_cluster_info.response.data.ext_id }}
+          - NTP Servers: {{ final_cluster_info.response.data.ntp_servers | default('Not configured') }}
+          - DSIP: {{ final_cluster_info.response.data.cluster_data_services_ip | default('Not configured') }}
+          - Categories: {{ final_cluster_info.response.data.categories | default('None') }}
+          - HA Status: {{ final_cluster_info.response.data.fault_tolerance_state | default('Not configured') }}
+
+  # handlers:
+  #   - name: Send notification on configuration complete
+  #     mail:
+  #       to: "admin@company.com"
+  #       subject: "Nutanix Cluster {{ cluster_name }} Configuration Complete"
+  #       body: |
+  #         The Nutanix cluster {{ cluster_name }} has been successfully configured with:
+  #         - NTP servers
+  #         - SMTP settings
+  #         - Data Services IP
+  #         - SSL certificates
+  #         - Categories
+  #         - High Availability
+  #         - Licenses
+  #       smtp: "{{ smtp_config.server }}"
+  #     when: smtp_result.changed

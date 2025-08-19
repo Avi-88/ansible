@@ -1,0 +1,46 @@
+---
+- name: Configuration Phase 1
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+    
+  vars_files:
+    - cluster_vars.yml
+
+  tasks:
+    - name: Register cluster to Prism Central 
+      nutanix.ncp.ntnx_prism_central_registration:
+        nutanix_host: {{prism_central_details.ip}}
+        nutanix_username: {{prism_central_details.username}}
+        nutanix_password: {{prism_central_details.password}}  
+        ext_id: {{prism_central_details.ext_id}}
+        remote_cluster:
+          aos_remote_cluster:
+            remote_cluster:
+              address:
+                ipv4:
+                  value: {{cluster_details.cluster_external_ip}}
+              credentials:
+                authentication:
+                  username: {{ cluster_details.nutanix_default_username }}
+                  password: {{ cluster_details.nutanix_default_password }}
+      register: registration_result
+
+    - name: Validate Prism Central registration success
+      ansible.builtin.debug:
+        msg: |
+          Registration succeeded!
+          Response: {{ registration_result.response }}
+      when:
+        - registration_result.response.status is defined
+        - registration_result.response.status == 'SUCCEEDED'
+
+    - name: Fail if Prism Central registration did not succeed
+      ansible.builtin.fail:
+        msg: |
+          Registration failed!
+          Error: {{ registration_result.error | default('No error message returned') }}
+          Response: {{ registration_result.response | default('No response returned') }}
+      when:
+        - registration_result.response.status is not defined or registration_result.response.status != 'SUCCEEDED'
