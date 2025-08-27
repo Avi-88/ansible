@@ -10,7 +10,7 @@
 
   tasks:
     - name: Register cluster to Prism Central 
-      nutanix.ncp.ntnx_prism_central_registration:
+      nutanix.ncp.ntnx_pc_registration_v2:
         nutanix_host: "{{ prism_central_details.ip }}"
         nutanix_username: "{{ prism_central_details.username }}"
         nutanix_password: "{{ prism_central_details.password }}"
