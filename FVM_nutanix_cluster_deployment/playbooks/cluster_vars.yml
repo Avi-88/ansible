@@ -83,13 +83,12 @@ nodes_list:
 
 
 prism_central_details:
-  ip: "<pc_ip>"
-  username: "<username>"
-  password: "<password>"
-  ext_id: "00000000-0000-0000-0000-000000000000"
+  ip: "10.161.21.90"
+  username: "admin"
+  password: "nx2Tech940!"
+  ext_id: "9ec9ae84-0648-4e0b-9d8a-2de74905719d"
 
 validate_certs: false
-cluster_uuid: ""
 ntp_servers:
   - "pool.ntp.org"
   - "time.google.com"

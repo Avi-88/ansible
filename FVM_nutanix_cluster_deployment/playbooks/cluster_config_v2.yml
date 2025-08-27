@@ -77,22 +77,22 @@
       debug:
         msg: "DSIP configured: {{ dsip_result.changed }}"
 
-    - name: Configure SSL certificates
-      nutanix.ncp.ntnx_clusters_v2:
-        ext_id: "{{ cluster_uuid }}"
-        state: present
-        name: "{{ cluster_details.cluster_name }}"
-        ssl_key:
-          key_type: "RSA_2048"
-          certificate: "{{ ssl_certificate | b64encode }}"
-          private_key: "{{ ssl_private_key | b64encode }}"
-        wait: true
-        wait_timeout: 600
-      register: ssl_result
+    # - name: Configure SSL certificates
+    #   nutanix.ncp.ntnx_clusters_v2:
+    #     ext_id: "{{ cluster_uuid }}"
+    #     state: present
+    #     name: "{{ cluster_details.cluster_name }}"
+    #     ssl_key:
+    #       key_type: "RSA_2048"
+    #       certificate: "{{ ssl_certificate | b64encode }}"
+    #       private_key: "{{ ssl_private_key | b64encode }}"
+    #     wait: true
+    #     wait_timeout: 600
+    #   register: ssl_result
 
-    - name: Display SSL certificate configuration result
-      debug:
-        msg: "SSL certificate configured: {{ ssl_result.changed }}"
+    # - name: Display SSL certificate configuration result
+    #   debug:
+    #     msg: "SSL certificate configured: {{ ssl_result.changed }}"
 
     - name: Assign categories to cluster
       nutanix.ncp.ntnx_clusters_v2:
@@ -128,19 +128,19 @@
       debug:
         msg: "High Availability enabled: {{ ha_result.changed }}"
 
-    - name: Apply Nutanix licenses
-      nutanix.ncp.ntnx_clusters_v2:
-        ext_id: "{{ cluster_uuid }}"
-        state: present
-        name: "{{ cluster_details.cluster_name }}"
-        license_keys: "{{ license_keys }}"
-        wait: true
-        wait_timeout: 300
-      register: license_result
+    # - name: Apply Nutanix licenses
+    #   nutanix.ncp.ntnx_clusters_v2:
+    #     ext_id: "{{ cluster_uuid }}"
+    #     state: present
+    #     name: "{{ cluster_details.cluster_name }}"
+    #     license_keys: "{{ license_keys }}"
+    #     wait: true
+    #     wait_timeout: 300
+    #   register: license_result
 
-    - name: Display license application result
-      debug:
-        msg: "Licenses applied: {{ license_result.changed }}"
+    # - name: Display license application result
+    #   debug:
+    #     msg: "Licenses applied: {{ license_result.changed }}"
 
     - name: Verify final cluster configuration
       nutanix.ncp.ntnx_clusters_info_v2:
@@ -157,20 +157,3 @@
           - DSIP: {{ final_cluster_info.response.data.cluster_data_services_ip | default('Not configured') }}
           - Categories: {{ final_cluster_info.response.data.categories | default('None') }}
           - HA Status: {{ final_cluster_info.response.data.fault_tolerance_state | default('Not configured') }}
-
-  # handlers:
-  #   - name: Send notification on configuration complete
-  #     mail:
-  #       to: "admin@company.com"
-  #       subject: "Nutanix Cluster {{ cluster_name }} Configuration Complete"
-  #       body: |
-  #         The Nutanix cluster {{ cluster_name }} has been successfully configured with:
-  #         - NTP servers
-  #         - SMTP settings
-  #         - Data Services IP
-  #         - SSL certificates
-  #         - Categories
-  #         - High Availability
-  #         - Licenses
-  #       smtp: "{{ smtp_config.server }}"
-  #     when: smtp_result.changed
