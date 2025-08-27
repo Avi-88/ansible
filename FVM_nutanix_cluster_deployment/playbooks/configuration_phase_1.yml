@@ -16,6 +16,7 @@
         nutanix_password: "{{ prism_central_details.password }}"
         validate_certs: "{{ validate_certs | default(false) }}"
         ext_id: "{{ prism_central_details.ext_id }}"
+        wait: false
         remote_cluster:
           aos_remote_cluster:
             remote_cluster:
@@ -27,6 +28,7 @@
                   username: "{{ cluster_details.nutanix_default_username }}"
                   password: "{{ cluster_details.nutanix_default_password }}"
       register: registration_result
+      ignore_errors: true
 
     - name: Validate Prism Central registration success
       ansible.builtin.debug:
