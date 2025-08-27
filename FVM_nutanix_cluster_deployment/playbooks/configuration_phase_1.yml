@@ -14,6 +14,7 @@
         nutanix_host: "{{ prism_central_details.ip }}"
         nutanix_username: "{{ prism_central_details.username }}"
         nutanix_password: "{{ prism_central_details.password }}"
+        validate_certs: "{{ validate_certs | default(false) }}"
         ext_id: "{{ prism_central_details.ext_id }}"
         remote_cluster:
           aos_remote_cluster:
