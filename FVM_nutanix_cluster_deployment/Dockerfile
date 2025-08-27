@@ -15,7 +15,6 @@ RUN apt-get update && \
 # Install Ansible
 RUN pip install --no-cache-dir ansible
 
-RUN pip install --no-cache-dir 'nutanix-prism-api-client>=2.8.0.0'
 
 # Install Nutanix NCP collection
 RUN ansible-galaxy collection install nutanix.ncp

@@ -20,11 +20,11 @@ ports_to_trace_to_cluster_network:
 
 cluster_details:
   nutanix_default_username: "nutanix"
-  nutanix_default_password: "nutanix/4u"
-  cluster_name: "Etisalat-FVM-Cluster"
+  nutanix_default_password: "nx2Tech940!"
+  cluster_name: "fallon04-2"
   foundation_vm_ip: "10.48.108.120"
   redundancy_factor: 2
-  cluster_external_ip: "10.38.80.37"
+  cluster_external_ip: "10.161.21.88"
   cvm_dns_servers:
     - "8.8.8.8"
     - "10.42.194.10"
