@@ -19,7 +19,7 @@ ports_to_trace_to_cluster_network:
 
 
 cluster_details:
-  nutanix_default_username: "nutanix"
+  nutanix_default_username: "admin"
   nutanix_default_password: "nx2Tech940!"
   cluster_name: "fallon04-2"
   foundation_vm_ip: "10.48.108.120"
