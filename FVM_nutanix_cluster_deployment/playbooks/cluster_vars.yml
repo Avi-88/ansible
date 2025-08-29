@@ -91,9 +91,9 @@ prism_central_details:
 
 validate_certs: false
 ntp_servers:
-  - "pool.ntp.org"
-  - "time.google.com"
-  - "time.cloudflare.com"
+  - fqdn:
+      value: "pool.ntp.org"
+
 smtp_config:
   server: "smtp.company.com"
   port: 587
@@ -102,7 +102,7 @@ smtp_config:
   from_email: "nutanix-alerts@company.com"
   enable_tls: true
 dsip_config:
-  ip_address: "10.1.1.100"
+  ip_address: "10.161.21.91"
   netmask: "255.255.255.0"
   gateway: "10.1.1.1"
 cluster_categories:

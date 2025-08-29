@@ -17,33 +17,48 @@
   tasks:
     - name: Get current cluster information
       nutanix.ncp.ntnx_clusters_info_v2:
-        filter:
-          cluster_name: "{{ cluster_details.cluster_name }}"
+        filter: "name eq '{{ cluster_details.cluster_name }}'"
       register: cluster_info
       when: cluster_uuid == ""
 
     - name: Set cluster UUID from cluster info
       set_fact:
-        cluster_uuid: "{{ cluster_info.response.data[0].ext_id }}"
-      when: cluster_uuid == "" and cluster_info.response.data | length > 0
+        cluster_uuid: "{{ cluster_info.response[0].ext_id }}"
+      when: cluster_info.response | length > 0
+
+    - name: Configure NTP servers
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        network: 
+          ntp_server_ip_list: "{{ ntp_servers }}"
+        wait: true
+        wait_timeout: 300
+      register: ntp_result
+
+    - name: Display NTP configuration result
       debug:
-        msg: "Cluster UUID: {{ cluster_uuid }}"
+        msg: "NTP servers configured: {{ ntp_result.response.data.ntp_servers | default('N/A') }}"
 
-    # - name: Configure NTP servers
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
-    #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
-    #     ntp_servers: "{{ ntp_servers }}"
-    #     wait: true
-    #     wait_timeout: 300
-    #   register: ntp_result
+    - name: Configure Data Services IP (DSIP)
+      nutanix.ncp.ntnx_clusters_v2:
+        ext_id: "{{ cluster_uuid }}"
+        state: present
+        name: "{{ cluster_details.cluster_name }}"
+        network:
+          external_data_service_ip:
+            ipv4:
+              value: "{{ dsip_config.ip_address }}"
+        wait: true
+        wait_timeout: 300
+      register: dsip_result
 
-    # - name: Display NTP configuration result
-    #   debug:
-    #     msg: "NTP servers configured: {{ ntp_result.response.data.ntp_servers | default('N/A') }}"
+    - name: Display DSIP configuration result
+      debug:
+        msg: "DSIP configured: {{ dsip_result.changed }}"
 
-    # - name: Configure SMTP settings
+        # - name: Configure SMTP settings
     #   nutanix.ncp.ntnx_clusters_v2:
     #     ext_id: "{{ cluster_uuid }}"
     #     state: present
@@ -63,38 +78,6 @@
     #   debug:
     #     msg: "SMTP server configured: {{ smtp_result.changed }}"
 
-    # - name: Configure Data Services IP (DSIP)
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
-    #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
-    #     cluster_data_services_ip:
-    #       ip_address: "{{ dsip_config.ip_address }}"
-    #       prefix_length: "{{ dsip_config.netmask | ipaddr('prefix') }}"
-    #     wait: true
-    #     wait_timeout: 300
-    #   register: dsip_result
-
-    # - name: Display DSIP configuration result
-    #   debug:
-    #     msg: "DSIP configured: {{ dsip_result.changed }}"
-
-    # - name: Configure SSL certificates
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
-    #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
-    #     ssl_key:
-    #       key_type: "RSA_2048"
-    #       certificate: "{{ ssl_certificate | b64encode }}"
-    #       private_key: "{{ ssl_private_key | b64encode }}"
-    #     wait: true
-    #     wait_timeout: 600
-    #   register: ssl_result
-
-    # - name: Display SSL certificate configuration result
-    #   debug:
-    #     msg: "SSL certificate configured: {{ ssl_result.changed }}"
 
     # - name: Assign categories to cluster
     #   nutanix.ncp.ntnx_clusters_v2:
@@ -112,37 +95,6 @@
     #   debug:
     #     msg: "Categories assigned: {{ category_result.results | map(attribute='changed') | list }}"
 
-    # - name: Enable High Availability (HA)
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
-    #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
-    #     enable_lock_down: false
-    #     fault_tolerance_state:
-    #       domain_awareness_level: "NODE"  
-    #       num_failures_to_tolerate: 1
-    #     hypervisor_types: ["AHV"]  
-    #     wait: true
-    #     wait_timeout: 600
-    #   register: ha_result
-
-    # - name: Display HA configuration result
-    #   debug:
-    #     msg: "High Availability enabled: {{ ha_result.changed }}"
-
-    # - name: Apply Nutanix licenses
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
-    #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
-    #     license_keys: "{{ license_keys }}"
-    #     wait: true
-    #     wait_timeout: 300
-    #   register: license_result
-
-    # - name: Display license application result
-    #   debug:
-    #     msg: "Licenses applied: {{ license_result.changed }}"
 
     # - name: Verify final cluster configuration
     #   nutanix.ncp.ntnx_clusters_info_v2:
