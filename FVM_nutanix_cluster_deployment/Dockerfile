@@ -15,6 +15,10 @@ RUN apt-get update && \
 # Install Ansible
 RUN pip install --no-cache-dir ansible
 
+#install sdks for api calls
+
+RUN pip install --no-cache-dir ntnx_clustermgmt_py_client ntnx_prism_py_client
+
 
 # Install Nutanix NCP collection
 RUN ansible-galaxy collection install nutanix.ncp
