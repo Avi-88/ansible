@@ -1,72 +1,128 @@
 ---
-- name: Deploy Nutanix Cluster with Standalone Foundation VM
+- name: Deploy Nutanix Cluster with Foundation API
   hosts: localhost
   gather_facts: false
-  collections:
-    - nutanix.ncp
-
+  
   vars_files:
     - cluster_vars.yml
 
+  vars:
+    foundation_api_base: "http://{{ foundation_vm.ip }}:8000/foundation"
+    foundation_timeout: 7200
+    progress_check_interval: 30
+    max_retries: 240  # 240 * 30s = 2 hours
+
   tasks:
-    - name: Image nodes and create the cluster
-      nutanix.ncp.ntnx_foundation:
-        nutanix_host: "{{ cluster_details.foundation_vm_ip }}"
-        timeout: 7200
-        cvm_gateway: "{{ cvm_network.gateway }}"
-        cvm_netmask: "{{ cvm_network.netmask }}"
-        current_cvm_vlan_tag: "{{ cvm_network.vlan_tag }}"
-        hypervisor_gateway: "{{ hypervisor_network.gateway }}"
-        hypervisor_netmask: "{{ hypervisor_network.netmask }}"
-        ipmi_gateway: "{{ ipmi_network.gateway }}"
-        ipmi_netmask: "{{ ipmi_network.netmask }}"
-        nos_package: "{{ aos_package_filename }}"
-        hypervisor_iso:
-          ahv:
-            filename: "{{ hypervisor_iso_filename }}"
-        default_ipmi_user: "{{ ipmi_credentials.username }}"
-        default_ipmi_password: "{{ ipmi_credentials.password }}"
-        blocks:
-          - block_id: "{{ block_1_id }}"
-            nodes: "{{ nodes_list }}"
-        clusters:
-          - name: "{{ cluster_details.cluster_name }}"
-            redundancy_factor: "{{ cluster_details.redundancy_factor }}"
-            cluster_members: "{{ nodes_list | map(attribute='manual_mode.cvm_ip') | list }}"
-            cvm_dns_servers: "{{ cluster_details.cvm_dns_servers }}"
-            cvm_ntp_servers: "{{ cluster_details.cvm_ntp_servers }}"
-            hypervisor_ntp_servers: "{{ cluster_details.hypervisor_ntp_servers }}"
-            cluster_init_now: true
+    - name: Validate required variables
+      ansible.builtin.assert:
+        that:
+          - foundation_vm.ip is defined
+          - cluster.name is defined
+          - nodes | length > 0
+          - network.cvm.gateway is defined
+          - network.hypervisor.gateway is defined
+        fail_msg: "Required variables are missing. Check your cluster_vars.yml file."
 
-      async: 7500
-      poll: 0
-      register: foundation_job
-
-    - name: Show job started
+    - name: Display deployment summary
       ansible.builtin.debug:
         msg:
-          - "Foundation process started"
-          - "Job ID: {{ foundation_job.ansible_job_id }}"
-          - "Foundation VM: {{ cluster_details.foundation_vm_ip }}"
-          - "Monitoring will check every 30 seconds..."
+          - "=== NUTANIX FOUNDATION DEPLOYMENT ==="
+          - "Foundation VM: {{ foundation_vm.ip }}"
+          - "Cluster Name: {{ cluster.name }}"
+          - "Number of Nodes: {{ nodes | length }}"
+          - "Hypervisor Type: {{ hypervisor.type }}"
+          - "AOS Package: {{ aos.package_filename }}"
+          - "Hypervisor ISO: {{ hypervisor.iso_filename }}"
 
-    - name: Check foundation progress periodically
-      ansible.builtin.async_status:
-        jid: "{{ foundation_job.ansible_job_id }}"
-      register: foundation_status
-      until: foundation_status.finished
-      retries: 240  # 240 * 30s = 2 hours
-      delay: 30
-      
-    - name: Display final results
+    - name: Prepare Foundation API payload
+      ansible.builtin.set_fact:
+        foundation_payload:
+          blocks:
+            - block_id: "{{ cluster.block_id }}"
+              nodes: "{{ nodes }}"
+          clusters:
+            - cluster_name: "{{ cluster.name }}"
+              cluster_init_now: true
+              cluster_members: "{{ nodes | map(attribute='cvm_ip') | list }}"
+              cvm_dns_servers: "{{ network.cvm.dns_servers | join(',') }}"
+              cvm_ntp_servers: "{{ network.cvm.ntp_servers | join(',') }}"
+              hypervisor_ntp_servers: "{{ network.hypervisor.ntp_servers | join(',') }}"
+              redundancy_factor: "{{ cluster.redundancy_factor }}"
+              single_node_cluster: "{{ (nodes | length) == 1 }}"
+              cluster_external_ip: "{{ cluster.external_ip | default(omit) }}"
+          cvm_gateway: "{{ network.cvm.gateway }}"
+          cvm_netmask: "{{ network.cvm.netmask }}"
+          hypervisor_gateway: "{{ network.hypervisor.gateway }}"
+          hypervisor_netmask: "{{ network.hypervisor.netmask }}"
+          hypervisor_nameserver: "{{ network.hypervisor.nameserver | default(omit) }}"
+          nos_package: "{{ aos.package_filename }}"
+          hypervisor_iso: >-
+            {{ {hypervisor.type: {'filename': hypervisor.iso_filename}} }}
+          ipmi_user: "{{ credentials.ipmi.username }}"
+          ipmi_password: "{{ credentials.ipmi.password }}"
+          hypervisor_password: "{{ credentials.hypervisor.password | default(omit) }}"
+
+    - name: Start foundation deployment
+      ansible.builtin.uri:
+        url: "{{ foundation_api_base }}/image_nodes"
+        method: POST
+        body_format: json
+        body: "{{ foundation_payload }}"
+        headers:
+          Content-Type: "application/json"
+        timeout: 60
+        status_code: [200, 202]
+        return_content: yes
+      register: foundation_response
+      failed_when: false
+
+    - name: Validate foundation API response
+      ansible.builtin.fail:
+        msg: "Foundation API call failed: {{ foundation_response.json.error | default(foundation_response.content) }}"
+      when: >
+        foundation_response.status not in [200, 202] or 
+        foundation_response.json.session_id is not defined
+
+    - name: Extract session ID and start monitoring
+      ansible.builtin.set_fact:
+        foundation_session_id: "{{ foundation_response.json.session_id }}"
+
+    - name: Show foundation job started
       ansible.builtin.debug:
         msg:
-          - "=== FOUNDATION COMPLETED ==="
-          - "Final Status: {{ 'SUCCESS' if foundation_status.changed else 'FAILED' }}"
-          - "Total Time: {{ foundation_status.delta if foundation_status.delta is defined else 'Unknown' }}"
-          - "Foundation VM: {{ cluster_details.foundation_vm_ip }}"
+          - "Foundation process started with session: {{ foundation_session_id }}"
+          - "Monitoring progress every {{ progress_check_interval }} seconds..."
 
-    - name: Show detailed final output
+    - name: Monitor foundation progress
+      ansible.builtin.uri:
+        url: "{{ foundation_api_base }}/progress?session_id={{ foundation_session_id }}"
+        method: GET
+        timeout: 30
+        status_code: [200]
+        return_content: yes
+      register: progress
+      until: >
+        progress.json.aggregate_percent_complete == 100 or
+        (progress.json.nodes | selectattr('percent_complete', 'equalto', 100) | list | length == (progress.json.nodes | length)) and
+        (progress.json.clusters | selectattr('percent_complete', 'equalto', 100) | list | length == (progress.json.clusters | length))
+      retries: "{{ max_retries }}"
+      delay: "{{ progress_check_interval }}"
+      failed_when: false
+
+    - name: Check final status
+      ansible.builtin.set_fact:
+        foundation_success: >-
+          {{ 
+            progress.json.aggregate_percent_complete == 100 and
+            (progress.json.nodes | selectattr('status', 'match', '.*[Ss]uccess.*|.*[Cc]omplete.*') | list | length == (progress.json.nodes | length)) and
+            (progress.json.clusters | selectattr('status', 'match', '.*[Ss]uccess.*|.*[Cc]omplete.*') | list | length == (progress.json.clusters | length))
+          }}
+
+    - name: Show final result
       ansible.builtin.debug:
-        var: foundation_status
-      when: foundation_status is defined
+        msg: "Foundation {{ 'SUCCESS' if foundation_success else 'FAILED' }} - Session: {{ foundation_session_id }}"
+
+    - name: Fail if unsuccessful
+      ansible.builtin.fail:
+        msg: "Foundation deployment failed"
+      when: not foundation_success

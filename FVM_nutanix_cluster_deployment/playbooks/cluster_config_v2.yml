@@ -7,8 +7,8 @@
   vars_files:
     - ./cluster_vars.yml
 
-  module_defaults:
-    group/nutanix.ncp.ntnx:
+  vars:
+    nutanix_connection: &nutanix_connection
       nutanix_host: "{{ prism_central_details.ip }}"
       nutanix_username: "{{ prism_central_details.username }}"
       nutanix_password: "{{ prism_central_details.password }}"
@@ -17,9 +17,9 @@
   tasks:
     - name: Get current cluster information
       nutanix.ncp.ntnx_clusters_info_v2:
+        <<: *nutanix_connection
         filter: "name eq '{{ cluster_details.cluster_name }}'"
       register: cluster_info
-      when: cluster_uuid == ""
 
     - name: Set cluster UUID from cluster info
       set_fact:
@@ -27,14 +27,14 @@
       when: cluster_info.response | length > 0
 
     - name: Configure NTP servers
-      nutanix.ncp.ntnx_clusters_v2:
+      nutanix.ncp.ntnx_clusters_v2: 
+        <<: *nutanix_connection
         ext_id: "{{ cluster_uuid }}"
         state: present
         name: "{{ cluster_details.cluster_name }}"
         network: 
           ntp_server_ip_list: "{{ ntp_servers }}"
         wait: true
-        wait_timeout: 300
       register: ntp_result
 
     - name: Display NTP configuration result
@@ -43,6 +43,7 @@
 
     - name: Configure Data Services IP (DSIP)
       nutanix.ncp.ntnx_clusters_v2:
+        <<: *nutanix_connection
         ext_id: "{{ cluster_uuid }}"
         state: present
         name: "{{ cluster_details.cluster_name }}"
@@ -51,14 +52,13 @@
             ipv4:
               value: "{{ dsip_config.ip_address }}"
         wait: true
-        wait_timeout: 300
       register: dsip_result
 
     - name: Display DSIP configuration result
       debug:
         msg: "DSIP configured: {{ dsip_result.changed }}"
 
-        # - name: Configure SMTP settings
+    # - name: Configure SMTP settings
     #   nutanix.ncp.ntnx_clusters_v2:
     #     ext_id: "{{ cluster_uuid }}"
     #     state: present

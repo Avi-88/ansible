@@ -1,4 +1,96 @@
 
+foundation_vm:
+  ip: "10.48.108.120"
+
+cluster:
+  name: "fallon04-2"
+  block_id: "BLOCK-1-ID"
+  redundancy_factor: 2
+  external_ip: "10.161.21.88"
+  admin_username: "admin"
+  admin_password: "nx2Tech940!"
+
+# Network Configuration
+network:
+  cvm:
+    gateway: "10.38.80.1"
+    netmask: "255.255.255.128"
+    dns_servers: 
+      - "8.8.8.8"
+      - "10.42.194.10"
+    ntp_servers:
+      - "pool.ntp.org"
+  
+  hypervisor:
+    gateway: "10.38.80.1"
+    netmask: "255.255.255.128"
+    nameserver: "8.8.8.8"
+    ntp_servers:
+      - "pool.ntp.org"
+  
+  ipmi:
+    gateway: "10.38.80.1"
+    netmask: "255.255.255.128"
+
+
+aos:
+  package_filename: "nutanix_installer_package-release-ganges-7.0.1.6-stable-e1cddb5b69117226bf50480cd1842052e910bf6d-x86_64.tar.gz"
+
+hypervisor:
+  type: "kvm"  # esx, hyperv, kvm, xen
+  iso_filename: "AHV-DVD-x86_64-10.0.1.1-15.iso"
+
+
+credentials:
+  ipmi:
+    username: "ADMIN"
+    password: "ADMIN"
+  hypervisor:
+    password: "nutanix/4u"  # Optional - only if hypervisor needs specific password
+
+
+nodes:
+  - node_position: "A"
+    cvm_ip: "10.38.80.29"
+    cvm_gb_ram: 40
+    hypervisor_ip: "10.38.80.25"
+    hypervisor_hostname: "ALPHA-1"
+    ipmi_ip: "10.38.80.33"
+    hypervisor: "kvm"
+    image_now: true
+    ipmi_configure_now: true
+    current_cvm_vlan_tag: null
+    device_hint: "vm_installer_disk"
+    mitigate_low_boot_space: true
+
+  - node_position: "B"
+    cvm_ip: "10.38.80.30"
+    cvm_gb_ram: 40
+    hypervisor_ip: "10.38.80.26"
+    hypervisor_hostname: "ALPHA-2"
+    ipmi_ip: "10.38.80.34"
+    hypervisor: "kvm"
+    image_now: true
+    ipmi_configure_now: true
+    current_cvm_vlan_tag: null
+    device_hint: "vm_installer_disk"
+    mitigate_low_boot_space: true
+
+  - node_position: "C"
+    cvm_ip: "10.38.80.31"
+    cvm_gb_ram: 40
+    hypervisor_ip: "10.38.80.27"
+    hypervisor_hostname: "ALPHA-3"
+    ipmi_ip: "10.38.80.35"
+    hypervisor: "kvm"
+    image_now: true
+    ipmi_configure_now: true
+    current_cvm_vlan_tag: null
+    device_hint: "vm_installer_disk"
+    mitigate_low_boot_space: true
+
+
+
 ports_to_check_on_ipmi:
   - port: 80
     desc: "HTTP"
@@ -17,72 +109,6 @@ ports_to_trace_to_cluster_network:
   - port: 8000
     desc: "Foundation API"
 
-
-cluster_details:
-  nutanix_default_username: "admin"
-  nutanix_default_password: "nx2Tech940!"
-  cluster_uuid: ""
-  cluster_name: "fallon04-2"
-  foundation_vm_ip: "10.48.108.120"
-  redundancy_factor: 2
-  cluster_external_ip: "10.161.21.88"
-  cvm_dns_servers:
-    - "8.8.8.8"
-    - "10.42.194.10"
-  cvm_ntp_servers:
-    - "pool.ntp.org"
-  hypervisor_ntp_servers:
-    - "pool.ntp.org"
-
-cvm_network:
-  gateway: "10.38.80.1"
-  netmask: "255.255.255.128"
-  vlan_tag: 0
-
-hypervisor_network:
-  gateway: "10.38.80.1"
-  netmask: "255.255.255.128"
-
-ipmi_network:
-  gateway: "10.38.80.1"
-  netmask: "255.255.255.128"
-
-aos_package_filename: "nutanix_installer_package-release-ganges-7.0.1.6-stable-e1cddb5b69117226bf50480cd1842052e910bf6d-x86_64.tar.gz"
-hypervisor_iso_filename: "AHV-DVD-x86_64-10.0.1.1-15.iso"
-
-ipmi_credentials:
-  username: "ADMIN"
-  password: "ADMIN"
-
-block_1_id: "BLOCK-1-ID"
-
-nodes_list:
-  - manual_mode:
-      node_position: "A"
-      cvm_ip: "10.38.80.29"
-      cvm_gb_ram: 40
-      hypervisor_ip: "10.38.80.25"
-      hypervisor_hostname: "ALPHA-1"
-      ipmi_ip: "10.38.80.33"
-      hypervisor: "kvm"
-  - manual_mode:
-      node_position: "B"
-      cvm_ip: "10.38.80.30"
-      cvm_gb_ram: 40
-      hypervisor_ip: "10.38.80.26"
-      hypervisor_hostname: "ALPHA-2"
-      ipmi_ip: "10.38.80.34"
-      hypervisor: "kvm"
-  - manual_mode:
-      node_position: "C"
-      cvm_ip: "10.38.80.31"
-      cvm_gb_ram: 40
-      hypervisor_ip: "10.38.80.27"
-      hypervisor_hostname: "ALPHA-3"
-      ipmi_ip: "10.38.80.35"
-      hypervisor: "kvm"
-
-
 prism_central_details:
   ip: "10.161.21.90"
   username: "admin"
@@ -93,7 +119,8 @@ validate_certs: false
 ntp_servers:
   - fqdn:
       value: "pool.ntp.org"
-
+  - fqdn:
+      value: "time.google.com"
 smtp_config:
   server: "smtp.company.com"
   port: 587
@@ -112,16 +139,3 @@ cluster_categories:
     value: "IT"
   - key: "Location"
     value: "DataCenter-A"
-ssl_certificate: |
-  -----BEGIN CERTIFICATE-----
-  # Your SSL certificate content here (base64 encoded)
-  # This is just a placeholder
-  -----END CERTIFICATE-----
-ssl_private_key: |
-  -----BEGIN PRIVATE KEY-----
-  # Your private key content here (base64 encoded)
-  # This is just a placeholder
-  -----END PRIVATE KEY-----
-license_keys:
-  - "nutanix_license_key_1"
-  - "nutanix_license_key_2"
