@@ -1,35 +1,34 @@
-
 foundation_vm:
-  ip: "10.48.108.120"
+  ip: "10.38.96.210"
+
 
 cluster:
-  name: "fallon04-2"
-  block_id: "BLOCK-1-ID"
+  name: "GOBLINSLAYER-1"
   redundancy_factor: 2
-  external_ip: "10.161.21.88"
+  external_ip: "10.48.68.149"
   admin_username: "admin"
-  admin_password: "nx2Tech940!"
+  admin_password: "nx2Tech420!"
+  placement_policy_name: "rf3_adaptive"
 
-# Network Configuration
 network:
   cvm:
-    gateway: "10.38.80.1"
-    netmask: "255.255.255.128"
+    gateway: "10.48.68.1"
+    netmask: "255.255.254.0"
     dns_servers: 
       - "8.8.8.8"
-      - "10.42.194.10"
+      - "10.48.104.10"
     ntp_servers:
-      - "pool.ntp.org"
+      - "0.pool.ntp.org"
   
   hypervisor:
-    gateway: "10.38.80.1"
-    netmask: "255.255.255.128"
+    gateway: "10.48.68.1"
+    netmask: "255.255.254.0"
     nameserver: "8.8.8.8"
     ntp_servers:
-      - "pool.ntp.org"
+      - "0.pool.ntp.org"
   
   ipmi:
-    gateway: "10.38.80.1"
+    gateway: "10.49.44.1"
     netmask: "255.255.255.128"
 
 
@@ -37,57 +36,85 @@ aos:
   package_filename: "nutanix_installer_package-release-ganges-7.0.1.6-stable-e1cddb5b69117226bf50480cd1842052e910bf6d-x86_64.tar.gz"
 
 hypervisor:
-  type: "kvm"  # esx, hyperv, kvm, xen
+  type: "kvm"  
   iso_filename: "AHV-DVD-x86_64-10.0.1.1-15.iso"
 
 
 credentials:
   ipmi:
     username: "ADMIN"
-    password: "ADMIN"
+    password: "nutanix/4u"
   hypervisor:
-    password: "nutanix/4u"  # Optional - only if hypervisor needs specific password
+    password: "nx2Tech420!" 
 
 
 nodes:
   - node_position: "A"
-    cvm_ip: "10.38.80.29"
+    cvm_ip: "10.48.68.146"
     cvm_gb_ram: 40
-    hypervisor_ip: "10.38.80.25"
-    hypervisor_hostname: "ALPHA-1"
-    ipmi_ip: "10.38.80.33"
+    hypervisor_ip: "10.48.68.143"
+    hypervisor_hostname: "GOBLINSLAYER-1-1"
+    ipmi_ip: "10.49.44.85"
     hypervisor: "kvm"
     image_now: true
     ipmi_configure_now: true
-    current_cvm_vlan_tag: null
-    device_hint: "vm_installer_disk"
-    mitigate_low_boot_space: true
+    vswitches:
+      - name: "vs0"
+        bond_mode: "active-backup"
+        uplinks: ["eth0", "eth1"]
+        mtu: 1500
+        lacp: "off"
+        other_config: []
+      - name: "vs1"
+        bond_mode: "active-backup"
+        uplinks: ["eth2", "eth3"]
+        mtu: 1500
+        lacp: "off"
+        other_config: []
 
-  - node_position: "B"
-    cvm_ip: "10.38.80.30"
-    cvm_gb_ram: 40
-    hypervisor_ip: "10.38.80.26"
-    hypervisor_hostname: "ALPHA-2"
-    ipmi_ip: "10.38.80.34"
-    hypervisor: "kvm"
-    image_now: true
-    ipmi_configure_now: true
-    current_cvm_vlan_tag: null
-    device_hint: "vm_installer_disk"
-    mitigate_low_boot_space: true
+  # - node_position: "B"
+  #   cvm_ip: "10.38.80.30"
+  #   cvm_gb_ram: 40
+  #   hypervisor_ip: "10.38.80.26"
+  #   hypervisor_hostname: "ALPHA-2"
+  #   ipmi_ip: "10.38.80.34"
+  #   hypervisor: "kvm"
+  #   image_now: true
+  #   ipmi_configure_now: true
+  #   vswitches:
+  #     - name: "vs0"
+  #       bond_mode: "active-backup"
+  #       uplinks: ["eth0", "eth1"]
+  #       mtu: 1500
+  #       lacp: "off"
+  #       other_config: []
+  #     - name: "vs1"
+  #       bond_mode: "active-backup"
+  #       uplinks: ["eth2", "eth3"]
+  #       mtu: 1500
+  #       lacp: "off"
+  #       other_config: []
 
-  - node_position: "C"
-    cvm_ip: "10.38.80.31"
-    cvm_gb_ram: 40
-    hypervisor_ip: "10.38.80.27"
-    hypervisor_hostname: "ALPHA-3"
-    ipmi_ip: "10.38.80.35"
-    hypervisor: "kvm"
-    image_now: true
-    ipmi_configure_now: true
-    current_cvm_vlan_tag: null
-    device_hint: "vm_installer_disk"
-    mitigate_low_boot_space: true
+  # - node_position: "C"
+  #   cvm_ip: "10.38.80.31"
+  #   cvm_gb_ram: 40
+  #   hypervisor_ip: "10.38.80.27"
+  #   hypervisor_hostname: "ALPHA-3"
+  #   ipmi_ip: "10.38.80.35"
+  #   hypervisor: "kvm"
+  #   image_now: true
+  #   ipmi_configure_now: true
+  #   vswitches:
+  #     - name: "vs0"
+  #       bond_mode: "active-backup"
+  #       uplinks: ["eth0", "eth1"]
+  #       mtu: 1500
+  #       lacp: "off"
+  #     - name: "vs1"
+  #       bond_mode: "active-backup"
+  #       uplinks: ["eth2", "eth3"]
+  #       mtu: 1500
+  #       lacp: "off"
 
 
 
