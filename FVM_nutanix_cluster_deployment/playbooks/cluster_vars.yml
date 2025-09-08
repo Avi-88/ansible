@@ -1,54 +1,53 @@
 foundation_vm:
-  ip: "10.48.108.120"
+  ip: "10.161.18.36"
 
 
 cluster:
-  name: "fallon04-2"
-  block_id: "BLOCK-1-ID"
+  name: "GOBLINSLAYER-1"
   redundancy_factor: 2
   placement_policy_name: "rf3_adaptive"
-  external_ip: "10.161.21.88"
+  external_ip: "10.48.68.149"
   admin_username: "admin"
-  admin_password: "nx2Tech940!"
+  admin_password: "nx2Tech420!"
 
 
 network:
   cvm:
-    gateway: "10.38.80.1"
-    netmask: "255.255.255.128"
+    gateway: "10.48.68.1"
+    netmask: "255.255.254.0"
     dns_servers: 
       - "8.8.8.8"
-      - "10.42.194.10"
+      - "10.48.104.10"
     ntp_servers:
       - "0.pool.ntp.org"
   hypervisor:
-    gateway: "10.38.80.1"
-    netmask: "255.255.255.128"
+    gateway: "10.48.68.1"
+    netmask: "255.255.254.0"
     nameserver: "8.8.8.8"
     ntp_servers:
       - "0.pool.ntp.org"
   ipmi:
-    gateway: "10.38.80.1"
+    gateway: "10.49.44.1"
     netmask: "255.255.255.128"
 
 
 aos:
-  package_filename: "nutanix_installer_package-release-ganges-7.0.1.6-stable-e1cddb5b69117226bf50480cd1842052e910bf6d-x86_64.tar.gz"
+  package_filename: "nutanix_installer_package-release-ganges-7.3.0.6-stable-21464dfae0e9ddc46c24a8d14d99efa33cae7f5f-x86_64.tar.gz"
 
 hypervisor:
   type: "kvm"  
-  iso_filename: "AHV-DVD-x86_64-10.0.1.1-15.iso"
-  password: "nutanix/4u" 
+  iso_filename: "AHV-DVD-x86_64-10.3.0.2-21.iso"
+  password: "nx2Tech420!" 
      
 
 nodes:
   - node_position: "A"
-    cvm_ip: "10.38.80.29"
+    cvm_ip: "10.48.68.146"
     cvm_boot_drive_source: "layout"
     hardware_attributes_override: {}
-    hypervisor_ip: "10.38.80.25"
+    hypervisor_ip: "10.48.68.143"
     hypervisor_hostname: "GOBLINSLAYER-1-1"
-    ipmi_ip: "10.38.80.33"
+    ipmi_ip: "10.49.44.85"
     ipmi_password: "nutanix/4u"
     is_bare_metal: true
     ipmi_user: "ADMIN"
@@ -57,17 +56,15 @@ nodes:
     ipmi_configure_now: false
     vswitches:
       - name: "vs0"
-        bond_mode: "balance-slb"
-        uplinks: ["vmnic0", "vmnic1"]
+        bond_mode: "active-backup"
+        uplinks: ["eth0", "eth1"]
         mtu: 1500
         lacp: "off"
-        other_config: []
       - name: "vs1"
-        bond_mode: "balance-slb"
-        uplinks: ["vmnic2", "vmnic3"]
+        bond_mode: "active-backup"
+        uplinks: ["eth2", "eth3"]
         mtu: 1500
         lacp: "off"
-        other_config: []
 
 
 ports_to_check_on_ipmi:
