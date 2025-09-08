@@ -55,7 +55,7 @@
               placement_policy_name: "{{ cluster.placement_policy_name | default('rf2_default') }}"
               backplane_subnet: "{{ network.backplane.subnet | default('') }}"
               backplane_netmask: "{{ network.backplane.netmask | default('') }}"
-              backplane_vlan: "{{ network.backplane.vlan | default(0) }}"
+              backplane_vlan: "{{ network.backplane.vlan | default(0) | int }}"
               enable_ns: "{{ cluster.enable_ns | default(false) }}"
               timezone: "{{ cluster.timezone | default('UTC') }}"
               ssh_using_password: true
