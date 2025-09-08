@@ -92,7 +92,7 @@
 
     - name: Validate foundation API response
       ansible.builtin.fail:
-        msg: "Foundation API call failed: {{ foundation_response.json.error | default(foundation_response.content) }}"
+        msg: "Foundation API call failed: {{ foundation_response.error | default(foundation_response) }}"
       when: >
         foundation_response.status not in [200, 202] or 
         foundation_response.json.session_id is not defined
