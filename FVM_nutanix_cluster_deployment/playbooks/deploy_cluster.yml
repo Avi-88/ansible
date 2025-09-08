@@ -38,9 +38,9 @@
       ansible.builtin.set_fact:
         foundation_payload:
           blocks:
-            - block_id: null
+            - block_id: None
               nodes: "{{ nodes }}"
-          bond_lacp_rate: null
+          bond_lacp_rate: None
           bond_mode: ""
           clusters:
             - cluster_name: "{{ cluster.name }}"
@@ -68,13 +68,13 @@
               cluster_password: "{{ cluster.admin_password | default(omit) }}"
           cvm_gateway: "{{ network.cvm.gateway }}"
           cvm_netmask: "{{ network.cvm.netmask }}"
-          cvm_gb_ram: null
+          cvm_gb_ram: None
           hypervisor_gateway: "{{ network.hypervisor.gateway }}"
           hypervisor_netmask: "{{ network.hypervisor.netmask }}"
           ipmi_gateway: "{{ network.ipmi.gateway }}"
           ipmi_netmask: "{{ network.ipmi.netmask }}"
           nos_package: "{{ aos.package_filename }}"
-          hypervisor_iso: "{{ {} | combine({hypervisor.type: {'filename': hypervisor.iso_filename, 'checksum': hypervisor.iso_checksum | default(null)}}) }}"
+          hypervisor_iso: "{{ {} | combine({hypervisor.type: {'filename': hypervisor.iso_filename, 'checksum': hypervisor.iso_checksum | default(None)}}) }}"
           hypervisor_password: "{{ hypervisor.password | default(omit) }}"
           rdma_passthrough: false
           skip_iso_validation: true

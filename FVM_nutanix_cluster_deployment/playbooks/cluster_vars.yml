@@ -27,7 +27,7 @@ network:
     ntp_servers:
       - "0.pool.ntp.org"
   ipmi:
-    gateway: "10.49.44.1"
+    gateway: "85"
     netmask: "255.255.255.128"
 
 
