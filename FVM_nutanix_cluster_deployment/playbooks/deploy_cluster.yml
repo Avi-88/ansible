@@ -38,9 +38,9 @@
       ansible.builtin.set_fact:
         foundation_payload:
           blocks:
-            - block_id: None
+            - block_id: null
               nodes: "{{ nodes }}"
-          bond_lacp_rate: None
+          bond_lacp_rate: null
           bond_mode: ""
           clusters:
             - cluster_name: "{{ cluster.name }}"
@@ -68,7 +68,7 @@
               cluster_password: "{{ cluster.admin_password | default(omit) }}"
           cvm_gateway: "{{ network.cvm.gateway }}"
           cvm_netmask: "{{ network.cvm.netmask }}"
-          cvm_gb_ram: None
+          cvm_gb_ram: null
           hypervisor_gateway: "{{ network.hypervisor.gateway }}"
           hypervisor_netmask: "{{ network.hypervisor.netmask }}"
           ipmi_gateway: "{{ network.ipmi.gateway }}"
