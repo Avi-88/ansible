@@ -4,7 +4,7 @@ foundation_vm:
 
 cluster:
   name: "GOBLINSLAYER-1"
-  redundancy_factor: "2"
+  redundancy_factor: 2
   placement_policy_name: "rf3_adaptive"
   external_ip: "10.48.68.149"
   admin_username: "admin"

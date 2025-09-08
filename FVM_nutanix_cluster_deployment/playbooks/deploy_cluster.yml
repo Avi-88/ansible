@@ -36,45 +36,48 @@
 
     - name: Prepare Foundation API payload
       ansible.builtin.set_fact:
-        foundation_payload:
-          blocks:
-            - block_id: null
-              nodes: "{{ nodes }}"
-          bond_lacp_rate: null
-          bond_mode: ""
-          clusters:
-            - cluster_name: "{{ cluster.name }}"
-              cluster_init_now: true
-              cluster_members: "{{ nodes | map(attribute='cvm_ip') | list }}"
-              cluster_external_ip: "{{ cluster.external_ip | default(omit) }}"
-              cvm_dns_servers: "{{ network.cvm.dns_servers | join(',') }}"
-              cvm_ntp_servers: "{{ network.cvm.ntp_servers | join(',') }}"
-              hypervisor_ntp_servers: "{{ network.hypervisor.ntp_servers | join(',') }}"
-              hypervisor_nameserver: "{{ network.hypervisor.nameserver | default(omit) }}"
-              redundancy_factor: "{{ cluster.redundancy_factor | int }}"
-              placement_policy_name: "{{ cluster.placement_policy_name | default('rf2_default') }}"
-              backplane_subnet: "{{ network.backplane.subnet | default('') }}"
-              backplane_netmask: "{{ network.backplane.netmask | default('') }}"
-              backplane_vlan: "{{ network.backplane.vlan | default(0) }}"
-              enable_ns: "{{ cluster.enable_ns | default(false) }}"
-              timezone: "{{ cluster.timezone | default('UTC') }}"
-              ssh_using_password: true
-              cluster_password: "{{ cluster.admin_password | default(omit) }}"
-          cvm_gateway: "{{ network.cvm.gateway }}"
-          cvm_netmask: "{{ network.cvm.netmask }}"
-          cvm_gb_ram: null
-          hypervisor_gateway: "{{ network.hypervisor.gateway }}"
-          hypervisor_netmask: "{{ network.hypervisor.netmask }}"
-          ipmi_gateway: "{{ network.ipmi.gateway }}"
-          ipmi_netmask: "{{ network.ipmi.netmask }}"
-          nos_package: "{{ aos.package_filename }}"
-          hypervisor_iso: "{{ {} | combine({hypervisor.type: {'filename': hypervisor.iso_filename, 'checksum': hypervisor.iso_checksum | default(None)}}) }}"
-          hypervisor_password: "{{ hypervisor.password | default(omit) }}"
-          rdma_passthrough: false
-          skip_iso_validation: true
-          svm_rescue_args: []
-
-
+        foundation_payload: >-
+          {{
+            {
+              "blocks": [{"block_id": None, "nodes": nodes}],
+              "bond_lacp_rate": None,
+              "bond_mode": "",
+              "clusters": [
+                {
+                  "cluster_name": cluster.name,
+                  "cluster_init_now": False,
+                  "cluster_members": nodes | map(attribute='cvm_ip') | list,
+                  "cluster_external_ip": cluster.external_ip | default(omit),
+                  "cvm_dns_servers": network.cvm.dns_servers | join(","),
+                  "cvm_ntp_servers": network.cvm.ntp_servers | join(","),
+                  "hypervisor_ntp_servers": network.hypervisor.ntp_servers | join(","),
+                  "hypervisor_nameserver": network.hypervisor.nameserver | default(omit),
+                  "redundancy_factor": cluster.redundancy_factor | int,
+                  "placement_policy_name": cluster.placement_policy_name | default("rf2_default"),
+                  "backplane_subnet": network.backplane.subnet | default(""),
+                  "backplane_netmask": network.backplane.netmask | default(""),
+                  "backplane_vlan": network.backplane.vlan | default(0) | int,
+                  "enable_ns": cluster.enable_ns | default(false),
+                  "timezone": cluster.timezone | default("UTC"),
+                  "ssh_using_password": True,
+                  "cluster_password": cluster.admin_password | default(omit)
+                }
+              ],
+              "cvm_gateway": network.cvm.gateway,
+              "cvm_netmask": network.cvm.netmask,
+              "cvm_gb_ram": None,
+              "hypervisor_gateway": network.hypervisor.gateway,
+              "hypervisor_netmask": network.hypervisor.netmask,
+              "ipmi_gateway": network.ipmi.gateway,
+              "ipmi_netmask": network.ipmi.netmask,
+              "nos_package": aos.package_filename,
+              "hypervisor_iso": {hypervisor.type: {"filename": hypervisor.iso_filename, "checksum": hypervisor.iso_checksum | default(None)}},
+              "hypervisor_password": hypervisor.password | default(omit),
+              "rdma_passthrough": False,
+              "skip_iso_validation": True,
+              "svm_rescue_args": []
+            }
+          }}
 
     - name: Start foundation deployment
       ansible.builtin.uri:
@@ -107,21 +110,12 @@
           - "Foundation process started with session: {{ foundation_session_id }}"
           - "Monitoring progress every {{ progress_check_interval }} seconds..."
 
-    - name: Monitor foundation progress
-      ansible.builtin.uri:
-        url: "{{ foundation_api_base }}/progress?session_id={{ foundation_session_id }}"
-        method: GET
-        timeout: 30
-        status_code: [200]
-        return_content: yes
-      register: progress
-      until: >
-        progress.json.aggregate_percent_complete == 100 or
-        (progress.json.nodes | selectattr('percent_complete', 'equalto', 100) | list | length == (progress.json.nodes | length)) and
-        (progress.json.clusters | selectattr('percent_complete', 'equalto', 100) | list | length == (progress.json.clusters | length))
-      retries: "{{ max_retries }}"
-      delay: "{{ progress_check_interval }}"
-      failed_when: false
+    - name: Monitor foundation with real-time display
+      include_tasks: progress.yml
+      loop: "{{ range(0, max_retries) | list }}"
+      loop_control:
+        loop_var: attempt_number
+      when: not foundation_complete | default(false)
 
     - name: Check final status
       ansible.builtin.set_fact:

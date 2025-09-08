@@ -1,0 +1,34 @@
+---
+- name: Get foundation progress
+  ansible.builtin.uri:
+    url: "{{ foundation_api_base }}/progress?session_id={{ foundation_session_id }}"
+    method: GET
+    timeout: 30
+    status_code: [200]
+    return_content: yes
+  register: progress_result
+
+- name: Display current progress
+  ansible.builtin.debug:
+    msg:
+      - "=== POLL {{ attempt_number + 1 }}/{{ max_retries }} ==="
+      - "Overall Progress: {{ progress_result.json.aggregate_percent_complete }}%"
+      - "Cluster Progress: {{ progress_result.json.clusters[0].status }} ({{ progress_result.json.clusters[0].percent_complete }}%)"
+      - "Action: {{ progress_result.json.action | default('Unknown') }}"
+      - "Session: {{ progress_result.json.session_id }}"
+
+
+- name: Check for completion
+  ansible.builtin.set_fact:
+    foundation_complete: true
+  when: progress_result.json.aggregate_percent_complete == 100
+
+- name: Check for failure
+  ansible.builtin.fail:
+    msg: "Foundation failed - Cluster status: {{ progress_result.json.clusters[0].status }}"
+  when: progress_result.json.clusters[0].status in ["Not Run", "Failed"]
+
+- name: Wait before next poll
+  ansible.builtin.pause:
+    seconds: "{{ progress_check_interval }}"
+  when: not foundation_complete | default(false)
