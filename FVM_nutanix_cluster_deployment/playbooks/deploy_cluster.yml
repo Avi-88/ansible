@@ -74,8 +74,7 @@
           ipmi_gateway: "{{ network.ipmi.gateway }}"
           ipmi_netmask: "{{ network.ipmi.netmask }}"
           nos_package: "{{ aos.package_filename }}"
-          hypervisor_iso: >-
-            {{ hypervisor.type: {'filename': hypervisor.iso_filename, 'checksum': hypervisor.iso_checksum | default(null)}} }
+          hypervisor_iso: "{{ {} | combine({hypervisor.type: {'filename': hypervisor.iso_filename, 'checksum': hypervisor.iso_checksum | default(null)}}) }}"
           hypervisor_password: "{{ hypervisor.password | default(omit) }}"
           rdma_passthrough: false
           skip_iso_validation: true
