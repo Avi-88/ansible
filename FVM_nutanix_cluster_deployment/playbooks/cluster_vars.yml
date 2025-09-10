@@ -55,16 +55,16 @@ nodes:
     image_now: true
     ipmi_configure_now: false
     vswitches:
-      - name: "vs0"
-        bond_mode: "active-backup"
+      - name: "br0"
+        bond-mode: "active-backup"
         uplinks: ["eth0", "eth1"]
         mtu: 1500
         lacp: "off"
-      - name: "vs1"
-        bond_mode: "active-backup"
-        uplinks: ["eth2", "eth3"]
-        mtu: 1500
-        lacp: "off"
+      # - name: "br1"
+      #   bond-mode: "active-backup"
+      #   uplinks: ["eth2", "eth3"]
+      #   mtu: 1500
+      #   lacp: "off"
 
 
 ports_to_check_on_ipmi:

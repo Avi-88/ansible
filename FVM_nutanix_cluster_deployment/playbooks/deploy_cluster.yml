@@ -110,27 +110,7 @@
           - "Foundation process started with session: {{ foundation_session_id }}"
           - "Monitoring progress every {{ progress_check_interval }} seconds..."
 
-    - name: Monitor foundation with real-time display
+    - name: Monitor foundation progress
       include_tasks: progress.yml
-      loop: "{{ range(0, max_retries) | list }}"
-      loop_control:
-        loop_var: attempt_number
-      when: not foundation_complete | default(false)
 
-    - name: Check final status
-      ansible.builtin.set_fact:
-        foundation_success: >-
-          {{ 
-            progress.json.aggregate_percent_complete == 100 and
-            (progress.json.nodes | selectattr('status', 'match', '.*[Ss]uccess.*|.*[Cc]omplete.*') | list | length == (progress.json.nodes | length)) and
-            (progress.json.clusters | selectattr('status', 'match', '.*[Ss]uccess.*|.*[Cc]omplete.*') | list | length == (progress.json.clusters | length))
-          }}
 
-    - name: Show final result
-      ansible.builtin.debug:
-        msg: "Foundation {{ 'SUCCESS' if foundation_success else 'FAILED' }} - Session: {{ foundation_session_id }}"
-
-    - name: Fail if unsuccessful
-      ansible.builtin.fail:
-        msg: "Foundation deployment failed"
-      when: not foundation_success

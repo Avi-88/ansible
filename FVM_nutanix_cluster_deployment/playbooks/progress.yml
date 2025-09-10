@@ -1,34 +1,77 @@
 ---
+- name: Initialize attempt counter if not set
+  ansible.builtin.set_fact:
+    current_attempt: "{{ current_attempt | default(0) | int + 1 }}"
+
+- name: Check if max retries exceeded
+  ansible.builtin.fail:
+    msg: "Foundation monitoring timed out after {{ max_retries }} attempts"
+  when: current_attempt | int > max_retries
+
 - name: Get foundation progress
   ansible.builtin.uri:
     url: "{{ foundation_api_base }}/progress?session_id={{ foundation_session_id }}"
     method: GET
     timeout: 30
-    status_code: [200]
+    status_code: [200, 201]
     return_content: yes
   register: progress_result
+
+- name: Store progress for final status check
+  ansible.builtin.set_fact:
+    progress: "{{ progress_result }}"
 
 - name: Display current progress
   ansible.builtin.debug:
     msg:
-      - "=== POLL {{ attempt_number + 1 }}/{{ max_retries }} ==="
+      - "=== POLL {{ current_attempt }}/{{ max_retries }} ==="
       - "Overall Progress: {{ progress_result.json.aggregate_percent_complete }}%"
-      - "Cluster Progress: {{ progress_result.json.clusters[0].status }} ({{ progress_result.json.clusters[0].percent_complete }}%)"
+      # - "Cluster Progress: {{ progress_result.json.clusters[0].status }} ({{ progress_result.json.clusters[0].percent_complete }}%)"
       - "Action: {{ progress_result.json.action | default('Unknown') }}"
       - "Session: {{ progress_result.json.session_id }}"
-
 
 - name: Check for completion
   ansible.builtin.set_fact:
     foundation_complete: true
   when: progress_result.json.aggregate_percent_complete == 100
 
-- name: Check for failure
-  ansible.builtin.fail:
-    msg: "Foundation failed - Cluster status: {{ progress_result.json.clusters[0].status }}"
-  when: progress_result.json.clusters[0].status in ["Not Run", "Failed"]
+- name: Check for failure and set flag
+  ansible.builtin.set_fact:
+    foundation_failed: true
+  when: >
+    progress_result.json.clusters is defined and 
+    progress_result.json.clusters | length > 0 and
+    (progress_result.json.clusters | selectattr('status', 'match', '.*[Nn]ot [Rr]un.*|.*[Ff]ailed.*') | list | length > 0)
+
+- name: Exit if complete or failed
+  block:
+    - name: Check final status
+      ansible.builtin.set_fact:
+        foundation_success: >-
+          {{ 
+            progress.json.aggregate_percent_complete == 100 and
+            (progress.json.nodes | default([]) | selectattr('status', 'match', '.*[Ss]uccess.*|.*[Cc]omplete.*') | list | length == (progress.json.nodes | default([]) | length)) and
+            (progress.json.clusters | default([]) | selectattr('status', 'match', '.*[Ss]uccess.*|.*[Cc]omplete.*') | list | length == (progress.json.clusters | default([]) | length))
+          }}
+      when: foundation_complete | default(false)
+    
+    - name: Set failed status when foundation failed
+      ansible.builtin.set_fact:
+        foundation_success: false
+      when: foundation_failed | default(false)
+    
+    - name: Show final result
+      ansible.builtin.debug:
+        msg: "Foundation {{ 'SUCCESS' if foundation_success else 'FAILED' }} - Session: {{ foundation_session_id }}"
+    
+    - name: End playbook
+      ansible.builtin.meta: end_play
+  when: foundation_complete | default(false) or foundation_failed | default(false)
+
 
 - name: Wait before next poll
   ansible.builtin.pause:
     seconds: "{{ progress_check_interval }}"
-  when: not foundation_complete | default(false)
+
+- name: Continue monitoring recursively
+  include_tasks: progress.yml
