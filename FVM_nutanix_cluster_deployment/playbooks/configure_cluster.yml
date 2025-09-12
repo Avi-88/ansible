@@ -15,23 +15,34 @@
       validate_certs: "{{ validate_certs | default(false) }}"
 
   tasks:
-    - name: Get current cluster information
-      nutanix.ncp.ntnx_clusters_info_v2:
-        <<: *nutanix_connection
-        filter: "name eq '{{ cluster_details.cluster_name }}'"
-      register: cluster_info
 
-    - name: Set cluster UUID from cluster info
-      set_fact:
-        cluster_uuid: "{{ cluster_info.response[0].ext_id }}"
-      when: cluster_info.response | length > 0
+    # - name: List desired category info
+    #   nutanix.ncp.ntnx_categories_info_v2:
+    #     <<: *nutanix_connection
+    #     expand: associations
+    #     filter: "key eq '{{ cluster_category.name }}' and value eq '{{ cluster_category.value }}'"
+    #   register: category_info
+
+    # - name: Display fetched category information
+    #   debug:
+    #     msg: "Fetched Category Info: {{ category_info }}"
+
+    # - name: Assign region category to the cluster
+    #   nutanix.ncp.ntnx_clusters_v2:
+    #     <<: *nutanix_connection
+    #     ext_id: "{{ cluster_ext_id }}"
+    #     state: present
+    #     name: "{{ cluster.name }}"
+    #     categories: "{{ cluster_categories | to_json }}"
+    #     wait: true
+    #   register: category_result
 
     - name: Configure NTP servers
       nutanix.ncp.ntnx_clusters_v2: 
         <<: *nutanix_connection
-        ext_id: "{{ cluster_uuid }}"
+        ext_id: "{{ cluster_ext_id }}"
         state: present
-        name: "{{ cluster_details.cluster_name }}"
+        name: "{{ cluster.name }}"
         network: 
           ntp_server_ip_list: "{{ ntp_servers }}"
         wait: true
@@ -44,9 +55,9 @@
     - name: Configure Data Services IP (DSIP)
       nutanix.ncp.ntnx_clusters_v2:
         <<: *nutanix_connection
-        ext_id: "{{ cluster_uuid }}"
+        ext_id: "{{ cluster_ext_id }}"
         state: present
-        name: "{{ cluster_details.cluster_name }}"
+        name: "{{ cluster.name }}"
         network:
           external_data_service_ip:
             ipv4:
@@ -54,15 +65,15 @@
         wait: true
       register: dsip_result
 
-    - name: Display DSIP configuration result
-      debug:
-        msg: "DSIP configured: {{ dsip_result.changed }}"
+    # - name: Display DSIP configuration result
+    #   debug:
+    #     msg: "DSIP configured: {{ dsip_result.changed }}"
 
     # - name: Configure SMTP settings
     #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
+    #     ext_id: "{{ cluster_ext_id }}"
     #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
+    #     name: "{{ cluster.name }}"
     #     smtp_server:
     #       address: "{{ smtp_config.server }}"
     #       port: "{{ smtp_config.port }}"
@@ -79,18 +90,6 @@
     #     msg: "SMTP server configured: {{ smtp_result.changed }}"
 
 
-    # - name: Assign categories to cluster
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_uuid }}"
-    #     state: present
-    #     name: "{{ cluster_details.cluster_name }}"
-    #     categories:
-    #       "{{ item.key }}": "{{ item.value }}"
-    #     wait: true
-    #     wait_timeout: 300
-    #   register: category_result
-    #   loop: "{{ cluster_categories }}"
-
     # - name: Display category assignment results
     #   debug:
     #     msg: "Categories assigned: {{ category_result.results | map(attribute='changed') | list }}"
@@ -98,7 +97,7 @@
 
     # - name: Verify final cluster configuration
     #   nutanix.ncp.ntnx_clusters_info_v2:
-    #     ext_id: "{{ cluster_uuid }}"
+    #     ext_id: "{{ cluster_ext_id }}"
     #   register: final_cluster_info
 
     # - name: Display final cluster configuration summary

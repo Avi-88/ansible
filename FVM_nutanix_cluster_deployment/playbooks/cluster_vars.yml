@@ -3,12 +3,12 @@ foundation_vm:
 
 
 cluster:
-  name: "GOBLINSLAYER-1"
+  name: "kestrel11-3"
   redundancy_factor: 2
   placement_policy_name: "rf3_adaptive"
-  external_ip: "10.48.68.149"
+  external_ip: "10.161.18.40"
   admin_username: "admin"
-  admin_password: "nx2Tech420!"
+  admin_password: "nx2Tech315!"
 
 
 network:
@@ -86,16 +86,19 @@ ports_to_trace_to_cluster_network:
     desc: "Foundation API"
 
 prism_central_details:
-  ip: "10.161.21.90"
+  ip: "10.161.18.42"
   username: "admin"
-  password: "nx2Tech940!"
+  password: "nx2Tech315!"
+  ext_id: "449ed88a-c92f-4051-8268-3bd19601cffc"
 
 validate_certs: false
+
 ntp_servers:
   - fqdn:
       value: "pool.ntp.org"
   - fqdn:
       value: "time.google.com"
+
 smtp_config:
   server: "smtp.company.com"
   port: 587
@@ -103,14 +106,15 @@ smtp_config:
   password: "smtp_password_here"
   from_email: "nutanix-alerts@company.com"
   enable_tls: true
+
 dsip_config:
-  ip_address: "10.161.21.91"
-  netmask: "255.255.255.0"
-  gateway: "10.1.1.1"
+  ip_address: "10.161.18.41"
+
 cluster_categories:
-  - key: "Environment"
-    value: "Production"
-  - key: "Department"
-    value: "IT"
-  - key: "Location"
-    value: "DataCenter-A"
+  region: "us-west-1"
+  environment: "production"
+  team: "platform"
+  cost_center: "engineering"
+
+
+cluster_ext_id: 00063df4-88c8-0db5-7c96-7cc25535a9b7
