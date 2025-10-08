@@ -8,7 +8,7 @@ cluster:
   placement_policy_name: "rf3_adaptive"
   external_ip: "10.161.18.40"
   admin_username: "admin"
-  admin_password: "nx2Tech315!"
+  admin_password: "nx2Tech2025!"
 
 
 network:

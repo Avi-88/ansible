@@ -16,60 +16,66 @@
       validate_certs: "{{ validate_certs | default(false) }}"
 
   tasks:
-    - name: Fetch cluster data if cluster is already registered in Prism Central
-      nutanix.ncp.ntnx_clusters_info_v2:
-        <<: *nutanix_connection
-        filter: "name eq '{{ cluster.name }}'"
-      register: cluster_info
+    - name: Rotate cluster passwords for registration
+      delegate_to: cvm_1
+      ansible.builtin.command: ncli user reset-password user-name="{{cluster.admin_username | quote}}" password="{{ cluster.admin_password | quote }}"
 
-    - name: Verify if cluster is already registered and register
-      block:
-        - name: Check if cluster Already Registered
-          ansible.builtin.debug:
-            msg: "Cluster '{{ cluster.name }}' is already registered in Prism Central."
+    # - name: Fetch cluster data if cluster is already registered in Prism Central
+    #   nutanix.ncp.ntnx_clusters_info_v2:
+    #     <<: *nutanix_connection
+    #     filter: "name eq '{{ cluster.name }}'"
+    #   register: cluster_info
 
-        - name: Add cluster ID to vars
-          lineinfile:
-            path: "cluster_vars.yml"
-            line: "cluster_ext_id: {{ cluster_info.response[0].ext_id  }}"
-            backup: yes
-        - name: End playbook as cluster is already registered
-          ansible.builtin.meta: end_play
-      when: cluster_info.response | length > 0
+    # - name: Verify if cluster is already registered and register
+    #   block:
+    #     - name: Check if cluster Already Registered
+    #       ansible.builtin.debug:
+    #         msg: "Cluster '{{ cluster.name }}' is already registered in Prism Central."
 
-    - name: Register cluster to Prism Central 
-      nutanix.ncp.ntnx_pc_registration_v2:
-        nutanix_host: "{{ prism_central_details.ip }}"
-        nutanix_username: "{{ prism_central_details.username }}"
-        nutanix_password: "{{ prism_central_details.password }}"
-        validate_certs: "{{ validate_certs | default(false) }}"
-        ext_id: "{{ prism_central_details.ext_id }}"
-        remote_cluster:
-          aos_remote_cluster:
-            remote_cluster:
-              address:
-                ipv4:
-                  value: "{{ cluster.external_ip }}"
-              credentials:
-                authentication:
-                  username: "{{ cluster.admin_username }}"
-                  password: "{{ cluster.admin_password }}"
-      register: registration_result
+    #     - name: Add cluster ID to vars
+    #       lineinfile:
+    #         path: "cluster_vars.yml"
+    #         line: "cluster_ext_id: {{ cluster_info.response[0].ext_id  }}"
+    #         backup: yes
+    #     - name: End playbook as cluster is already registered
+    #       ansible.builtin.meta: end_play
+    #   when: cluster_info.response | length > 0
 
-    - name: Validate Prism Central registration success
-      ansible.builtin.debug:
-        msg: |
-          Cluster registration successful for "{{ cluster.name }}".
-          Response: {{ registration_result.response }}
-      when:
-        - registration_result.response.status is defined
-        - registration_result.response.status == 'SUCCEEDED'
 
-    - name: Fail if Prism Central registration did not succeed
-      ansible.builtin.fail:
-        msg: |
-          Registration failed!
-          Error: {{ registration_result.error | default('No error message returned') }}
-          Response: {{ registration_result.response | default('No response returned') }}
-      when:
-        - registration_result.response.status is not defined or registration_result.response.status != 'SUCCEEDED'
+
+    # - name: Register cluster to Prism Central 
+    #   nutanix.ncp.ntnx_pc_registration_v2:
+    #     nutanix_host: "{{ prism_central_details.ip }}"
+    #     nutanix_username: "{{ prism_central_details.username }}"
+    #     nutanix_password: "{{ prism_central_details.password }}"
+    #     validate_certs: "{{ validate_certs | default(false) }}"
+    #     ext_id: "{{ prism_central_details.ext_id }}"
+    #     remote_cluster:
+    #       aos_remote_cluster:
+    #         remote_cluster:
+    #           address:
+    #             ipv4:
+    #               value: "{{ cluster.external_ip }}"
+    #           credentials:
+    #             authentication:
+    #               username: "{{ cluster.admin_username }}"
+    #               password: "{{ cluster.admin_password }}"
+    #   register: registration_result
+
+    # - name: Validate Prism Central registration success
+    #   ansible.builtin.debug:
+    #     msg: |
+    #       Cluster registration successful for "{{ cluster.name }}".
+    #       Response: {{ registration_result.response }}
+    #   when:
+    #     - registration_result.response.status is defined
+    #     - registration_result.response.status == 'SUCCEEDED'
+
+    # - name: Fail if Prism Central registration did not succeed
+    #   ansible.builtin.fail:
+    #     msg: |
+    #       Registration failed!
+    #       Error: {{ registration_result.error | default('No error message returned') }}
+    #       Response: {{ registration_result.response | default('No response returned') }}
+    #   when:
+    #     - registration_result.response.status is not defined or registration_result.response.status != 'SUCCEEDED'
