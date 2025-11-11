@@ -26,7 +26,6 @@
     msg:
       - "=== POLL {{ current_attempt }}/{{ max_retries }} ==="
       - "Overall Progress: {{ progress_result.json.aggregate_percent_complete }}%"
-      # - "Cluster Progress: {{ progress_result.json.clusters[0].status }} ({{ progress_result.json.clusters[0].percent_complete }}%)"
       - "Action: {{ progress_result.json.action | default('Unknown') }}"
       - "Session: {{ progress_result.json.session_id }}"
 

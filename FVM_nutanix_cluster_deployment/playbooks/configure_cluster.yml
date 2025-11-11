@@ -15,28 +15,6 @@
       validate_certs: "{{ validate_certs | default(false) }}"
 
   tasks:
-
-    # - name: List desired category info
-    #   nutanix.ncp.ntnx_categories_info_v2:
-    #     <<: *nutanix_connection
-    #     expand: associations
-    #     filter: "key eq '{{ cluster_category.name }}' and value eq '{{ cluster_category.value }}'"
-    #   register: category_info
-
-    # - name: Display fetched category information
-    #   debug:
-    #     msg: "Fetched Category Info: {{ category_info }}"
-
-    # - name: Assign region category to the cluster
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     <<: *nutanix_connection
-    #     ext_id: "{{ cluster_ext_id }}"
-    #     state: present
-    #     name: "{{ cluster.name }}"
-    #     categories: "{{ cluster_categories | to_json }}"
-    #     wait: true
-    #   register: category_result
-
     - name: Configure NTP servers
       nutanix.ncp.ntnx_clusters_v2: 
         <<: *nutanix_connection
@@ -64,49 +42,3 @@
               value: "{{ dsip_config.ip_address }}"
         wait: true
       register: dsip_result
-
-    # - name: Display DSIP configuration result
-    #   debug:
-    #     msg: "DSIP configured: {{ dsip_result.changed }}"
-
-    # - name: Configure SMTP settings
-    #   nutanix.ncp.ntnx_clusters_v2:
-    #     ext_id: "{{ cluster_ext_id }}"
-    #     state: present
-    #     name: "{{ cluster.name }}"
-    #     smtp_server:
-    #       address: "{{ smtp_config.server }}"
-    #       port: "{{ smtp_config.port }}"
-    #       username: "{{ smtp_config.username }}"
-    #       password: "{{ smtp_config.password }}"
-    #       from_email_address: "{{ smtp_config.from_email }}"
-    #       security_mode: "{{ 'TLS' if smtp_config.enable_tls else 'NONE' }}"
-    #     wait: true
-    #     wait_timeout: 300
-    #   register: smtp_result
-
-    # - name: Display SMTP configuration result
-    #   debug:
-    #     msg: "SMTP server configured: {{ smtp_result.changed }}"
-
-
-    # - name: Display category assignment results
-    #   debug:
-    #     msg: "Categories assigned: {{ category_result.results | map(attribute='changed') | list }}"
-
-
-    # - name: Verify final cluster configuration
-    #   nutanix.ncp.ntnx_clusters_info_v2:
-    #     ext_id: "{{ cluster_ext_id }}"
-    #   register: final_cluster_info
-
-    # - name: Display final cluster configuration summary
-    #   debug:
-    #     msg: |
-    #       Cluster Configuration Summary:
-    #       - Name: {{ final_cluster_info.response.data.name }}
-    #       - UUID: {{ final_cluster_info.response.data.ext_id }}
-    #       - NTP Servers: {{ final_cluster_info.response.data.ntp_servers | default('Not configured') }}
-    #       - DSIP: {{ final_cluster_info.response.data.cluster_data_services_ip | default('Not configured') }}
-    #       - Categories: {{ final_cluster_info.response.data.categories | default('None') }}
-    #       - HA Status: {{ final_cluster_info.response.data.fault_tolerance_state | default('Not configured') }}

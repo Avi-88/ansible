@@ -1,0 +1,39 @@
+# Sensitive files
+**/nutanix_secrets.yml
+**/secrets.yml
+**/*_secrets.yml
+**/*secrets*.yml
+info.txt
+*.log
+
+# Ansible
+.ansible/
+*.retry
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+ansible-env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+

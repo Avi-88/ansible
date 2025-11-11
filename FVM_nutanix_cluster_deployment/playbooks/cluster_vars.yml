@@ -1,34 +1,36 @@
+# Foundation VM Configuration
 foundation_vm:
-  ip: "10.161.18.36"
+  ip: "<FOUNDATION_VM_IP>"
 
-
+# Cluster Configuration
 cluster:
-  name: "kestrel11-3"
+  name: "<CLUSTER_NAME>"
   redundancy_factor: 2
   placement_policy_name: "rf3_adaptive"
-  external_ip: "10.161.18.40"
+  external_ip: "<CLUSTER_EXTERNAL_IP>"
   admin_username: "admin"
-  admin_password: "nx2Tech2025!"
+  admin_password: "<CLUSTER_ADMIN_PASSWORD>"
 
 
+# Network Configuration
 network:
   cvm:
-    gateway: "10.48.68.1"
-    netmask: "255.255.254.0"
+    gateway: "<CVM_GATEWAY_IP>"
+    netmask: "<CVM_NETMASK>"
     dns_servers: 
       - "8.8.8.8"
-      - "10.48.104.10"
+      - "<DNS_SERVER_2>"
     ntp_servers:
       - "0.pool.ntp.org"
   hypervisor:
-    gateway: "10.48.68.1"
-    netmask: "255.255.254.0"
+    gateway: "<HYPERVISOR_GATEWAY_IP>"
+    netmask: "<HYPERVISOR_NETMASK>"
     nameserver: "8.8.8.8"
     ntp_servers:
       - "0.pool.ntp.org"
   ipmi:
-    gateway: "10.49.44.1"
-    netmask: "255.255.255.128"
+    gateway: "<IPMI_GATEWAY_IP>"
+    netmask: "<IPMI_NETMASK>"
 
 
 aos:
@@ -36,19 +38,21 @@ aos:
 
 hypervisor:
   type: "kvm"  
-  iso_filename: "AHV-DVD-x86_64-10.3.0.2-21.iso"
-  password: "nx2Tech420!" 
+  iso_filename: "<AHV_ISO_FILENAME>"
+  password: "<HYPERVISOR_PASSWORD>" 
      
 
+# Node Configuration
+# Update with your actual node details
 nodes:
   - node_position: "A"
-    cvm_ip: "10.48.68.146"
+    cvm_ip: "<NODE_A_CVM_IP>"
     cvm_boot_drive_source: "layout"
     hardware_attributes_override: {}
-    hypervisor_ip: "10.48.68.143"
-    hypervisor_hostname: "GOBLINSLAYER-1-1"
-    ipmi_ip: "10.49.44.85"
-    ipmi_password: "nutanix/4u"
+    hypervisor_ip: "<NODE_A_HYPERVISOR_IP>"
+    hypervisor_hostname: "<NODE_A_HOSTNAME>"
+    ipmi_ip: "<NODE_A_IPMI_IP>"
+    ipmi_password: "<IPMI_PASSWORD>"
     is_bare_metal: true
     ipmi_user: "ADMIN"
     hypervisor: "kvm"
@@ -60,11 +64,6 @@ nodes:
         uplinks: ["eth0", "eth1"]
         mtu: 1500
         lacp: "off"
-      # - name: "br1"
-      #   bond-mode: "active-backup"
-      #   uplinks: ["eth2", "eth3"]
-      #   mtu: 1500
-      #   lacp: "off"
 
 
 ports_to_check_on_ipmi:
@@ -85,11 +84,12 @@ ports_to_trace_to_cluster_network:
   - port: 8000
     desc: "Foundation API"
 
+# Prism Central Configuration (for post-deployment registration)
 prism_central_details:
-  ip: "10.161.18.42"
+  ip: "<PRISM_CENTRAL_IP>"
   username: "admin"
-  password: "nx2Tech315!"
-  ext_id: "449ed88a-c92f-4051-8268-3bd19601cffc"
+  password: "<PRISM_CENTRAL_PASSWORD>"
+  ext_id: "<PRISM_CENTRAL_EXT_ID>"
 
 validate_certs: false
 
@@ -108,7 +108,7 @@ smtp_config:
   enable_tls: true
 
 dsip_config:
-  ip_address: "10.161.18.41"
+  ip_address: "<DATA_SERVICES_IP>"
 
 cluster_categories:
   region: "us-west-1"
@@ -117,4 +117,5 @@ cluster_categories:
   cost_center: "engineering"
 
 
-cluster_ext_id: 00063df4-88c8-0db5-7c96-7cc25535a9b7
+# Cluster External ID (set after cluster is deployed)
+cluster_ext_id: "<CLUSTER_EXT_ID>"
